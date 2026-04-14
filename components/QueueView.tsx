@@ -13,18 +13,11 @@ import Link from "next/link";
 import { motion, AnimatePresence, PanInfo } from "framer-motion";
 import {
   ArrowClockwise,
-  ArrowDown,
   ArrowLeft,
-  ArrowUp,
   Bookmark,
   CaretRight,
   Check,
-  ListDashes,
   Prohibit,
-  Shuffle,
-  SortAscending,
-  SquaresFour,
-  TelevisionSimple,
 } from "@phosphor-icons/react";
 import { formatDuration, formatRelative } from "@/lib/format";
 import { categoryName } from "@/lib/categories";
@@ -239,27 +232,26 @@ export function QueueView({
     >
       <PullIndicator distance={pullDistance} refreshing={pending} />
 
-      {/* iOS large title + refresh action */}
+      {/* iOS large title + paired actions */}
       <div className="flex items-end justify-between gap-3">
         <h1 className="text-large-title">Videos</h1>
         <button
           onClick={fetchNew}
           disabled={pending}
-          className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-surface-raised text-foreground transition hover:opacity-80 disabled:opacity-50"
+          className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-surface text-foreground transition-[transform,opacity] duration-150 active:scale-90 disabled:opacity-50"
           aria-label="Refresh"
         >
           <ArrowClockwise
-            size={18}
+            size={16}
             weight="bold"
             className={pending ? "animate-spin" : ""}
           />
         </button>
       </div>
 
-      {/* View tabs — iOS segmented control */}
-      <div className="flex w-full items-stretch rounded-[12px] bg-surface p-0.5 text-subhead">
+      {/* View tabs — iOS segmented control, text only */}
+      <div className="flex w-full items-stretch rounded-[10px] bg-surface p-[3px] text-subhead">
         <ViewTab
-          icon={ListDashes}
           active={view === "all" && !channelId && !categoryId}
           onClick={() =>
             setParam({ view: null, channel: null, category: null })
@@ -268,7 +260,6 @@ export function QueueView({
           All
         </ViewTab>
         <ViewTab
-          icon={TelevisionSimple}
           active={view === "channels" || !!channelId}
           onClick={() =>
             setParam({ view: "channels", channel: null, category: null })
@@ -277,7 +268,6 @@ export function QueueView({
           Channels
         </ViewTab>
         <ViewTab
-          icon={SquaresFour}
           active={view === "categories" || !!categoryId}
           onClick={() =>
             setParam({ view: "categories", channel: null, category: null })
@@ -313,30 +303,26 @@ export function QueueView({
         <CategoryList entries={optimisticEntries} onPick={(id) => setParam({ view: null, category: id })} />
       ) : (
         <>
-          <div className="flex items-center gap-1 overflow-x-auto scrollbar-hidden">
+          <div className="flex items-center gap-2 overflow-x-auto scrollbar-hidden">
             <SortPill
-              icon={ArrowDown}
               active={sort === "newest"}
               onClick={() => setSort("newest")}
             >
               Newest
             </SortPill>
             <SortPill
-              icon={ArrowUp}
               active={sort === "oldest"}
               onClick={() => setSort("oldest")}
             >
               Oldest
             </SortPill>
             <SortPill
-              icon={SortAscending}
               active={sort === "channel"}
               onClick={() => setSort("channel")}
             >
               Channel
             </SortPill>
             <SortPill
-              icon={Shuffle}
               active={sort === "random"}
               onClick={() => {
                 setShuffleSeed(Date.now() % 2147483647);
@@ -414,23 +400,20 @@ function ViewTab({
   children,
   active,
   onClick,
-  icon: Icon,
 }: {
   children: React.ReactNode;
   active: boolean;
   onClick: () => void;
-  icon: PhosphorIcon;
 }) {
   return (
     <button
       onClick={onClick}
-      className={`inline-flex flex-1 items-center justify-center gap-1.5 rounded-[10px] py-1.5 font-medium transition ${
+      className={`flex-1 rounded-[8px] py-1.5 text-center font-medium transition-all duration-150 active:scale-[0.97] ${
         active
           ? "bg-surface-raised text-foreground shadow-[0_1px_3px_rgba(0,0,0,0.5)]"
           : "text-muted hover:text-foreground"
       }`}
     >
-      <Icon size={14} weight={active ? "fill" : "regular"} />
       {children}
     </button>
   );
@@ -440,23 +423,20 @@ function SortPill({
   children,
   active,
   onClick,
-  icon: Icon,
 }: {
   children: React.ReactNode;
   active: boolean;
   onClick: () => void;
-  icon: PhosphorIcon;
 }) {
   return (
     <button
       onClick={onClick}
-      className={`inline-flex shrink-0 items-center gap-1 rounded-full px-3 py-1.5 text-footnote transition ${
+      className={`shrink-0 rounded-full px-3.5 py-1.5 text-footnote transition-[background-color,color,transform] duration-150 active:scale-95 ${
         active
-          ? "bg-foreground text-background"
+          ? "bg-foreground text-background font-medium"
           : "bg-surface text-muted hover:text-foreground"
       }`}
     >
-      <Icon size={12} weight="bold" />
       {children}
     </button>
   );
@@ -675,11 +655,7 @@ function CategoryList({
 }
 
 function SectionLabel({ children }: { children: React.ReactNode }) {
-  return (
-    <h2 className="px-0.5 text-footnote font-semibold uppercase tracking-wide text-muted">
-      {children}
-    </h2>
-  );
+  return <h2 className="px-0.5 text-title-2">{children}</h2>;
 }
 
 function VideoRow({
@@ -805,11 +781,8 @@ function VideoCard({
           </div>
         </div>
       </Link>
-      <div className="flex items-center gap-1 border-t border-border/60 px-2 py-1.5 text-xs">
-        <RowButton
-          icon={Check}
-          onClick={() => onAction(entry, "watched")}
-        >
+      <div className="flex items-center border-t border-border/60 px-1 py-1">
+        <RowButton icon={Check} onClick={() => onAction(entry, "watched")}>
           Watched
         </RowButton>
         <RowButton
@@ -823,7 +796,7 @@ function VideoCard({
           onClick={() => onAction(entry, "not_interested")}
           tone="danger"
         >
-          Not interested
+          Skip
         </RowButton>
       </div>
     </div>
@@ -847,11 +820,11 @@ function RowButton({
         e.stopPropagation();
         onClick();
       }}
-      className={`inline-flex items-center gap-1 rounded-lg px-2.5 py-1.5 text-footnote text-muted transition active:scale-95 active:bg-surface-raised hover:bg-surface-raised hover:text-foreground ${
+      className={`inline-flex flex-1 items-center justify-center gap-1.5 rounded-lg py-1.5 text-footnote text-muted transition-[transform,background-color,color] duration-150 active:scale-[0.96] active:bg-surface-raised hover:bg-surface-raised hover:text-foreground ${
         tone === "danger" ? "hover:text-danger" : ""
       }`}
     >
-      <Icon size={12} weight="bold" />
+      <Icon size={13} weight="bold" />
       {children}
     </button>
   );

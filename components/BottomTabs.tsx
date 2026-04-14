@@ -10,7 +10,7 @@ import {
   Rows,
 } from "@phosphor-icons/react";
 
-const TABS = [
+const MAIN = [
   { href: "/", label: "Videos", icon: ListDashes, match: (p: string) => p === "/" },
   {
     href: "/searches",
@@ -25,12 +25,6 @@ const TABS = [
     match: (p: string) => p === "/add",
   },
   {
-    href: "/search",
-    label: "Search",
-    icon: MagnifyingGlass,
-    match: (p: string) => p.startsWith("/search") && !p.startsWith("/searches"),
-  },
-  {
     href: "/library",
     label: "Library",
     icon: BookmarksSimple,
@@ -43,28 +37,30 @@ export function BottomTabs() {
   if (pathname.startsWith("/watch/")) return null;
   if (pathname.startsWith("/sign-in")) return null;
 
+  const searchActive =
+    pathname.startsWith("/search") && !pathname.startsWith("/searches");
+
   return (
     <nav
       className="fixed inset-x-0 bottom-0 z-40 sm:hidden"
       aria-label="Primary"
     >
       <div
-        className="px-3"
-        style={{
-          paddingBottom: "calc(env(safe-area-inset-bottom) + 0.5rem)",
-        }}
+        className="flex items-center gap-2 px-3"
+        style={{ paddingBottom: "calc(env(safe-area-inset-bottom) + 0.5rem)" }}
       >
-        <div className="glass-pill rounded-full">
-          <ul className="flex items-stretch justify-around px-1">
-            {TABS.map((tab) => {
+        {/* Main tabs pill */}
+        <div className="glass-pill flex-1 rounded-full">
+          <ul className="flex items-stretch justify-around">
+            {MAIN.map((tab) => {
               const active = tab.match(pathname);
               const Icon = tab.icon;
               return (
                 <li key={tab.href} className="flex-1">
                   <Link
                     href={tab.href}
-                    className={`flex flex-col items-center gap-0.5 px-1 pt-2 pb-1.5 transition-[color] duration-150 ${
-                      active ? "text-accent" : "text-muted"
+                    className={`flex flex-col items-center gap-0.5 px-1 py-2 transition-[color,transform] duration-150 active:scale-95 ${
+                      active ? "text-foreground" : "text-muted"
                     }`}
                     aria-current={active ? "page" : undefined}
                   >
@@ -83,6 +79,21 @@ export function BottomTabs() {
             })}
           </ul>
         </div>
+
+        {/* Floating search button — separate glass pill */}
+        <Link
+          href="/search"
+          aria-label="Search"
+          aria-current={searchActive ? "page" : undefined}
+          className={`glass-pill flex h-[60px] w-[60px] shrink-0 items-center justify-center rounded-full transition-[transform,color] duration-150 active:scale-95 ${
+            searchActive ? "text-foreground" : "text-muted"
+          }`}
+        >
+          <MagnifyingGlass
+            size={22}
+            weight={searchActive ? "fill" : "regular"}
+          />
+        </Link>
       </div>
     </nav>
   );
