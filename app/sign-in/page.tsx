@@ -23,7 +23,7 @@ export default async function SignInPage() {
         >
           <button
             type="submit"
-            className="flex w-full items-center justify-center gap-3 rounded-xl bg-foreground px-5 py-3 text-body font-semibold text-background transition active:scale-[0.98] hover:opacity-90 focus-visible:outline-none"
+            className="flex w-full items-center justify-center gap-3 rounded-xl bg-foreground px-5 py-3 text-body font-semibold text-background transition-opacity duration-200 hover:opacity-90 active:opacity-70 focus-visible:outline-none"
           >
             <GoogleMark />
             Continue with Google

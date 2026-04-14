@@ -59,7 +59,7 @@ export function BottomTabs() {
                 <li key={tab.href} className="flex-1">
                   <Link
                     href={tab.href}
-                    className={`flex flex-col items-center gap-0.5 px-1 py-2 transition-[color,transform] duration-150 active:scale-95 ${
+                    className={`pressable flex flex-col items-center gap-0.5 rounded-full px-1 py-2 ${
                       active ? "text-foreground" : "text-muted"
                     }`}
                     aria-current={active ? "page" : undefined}
@@ -85,7 +85,7 @@ export function BottomTabs() {
           href="/search"
           aria-label="Search"
           aria-current={searchActive ? "page" : undefined}
-          className={`glass-pill flex h-[60px] w-[60px] shrink-0 items-center justify-center rounded-full transition-[transform,color] duration-150 active:scale-95 ${
+          className={`glass-pill pressable flex h-[60px] w-[60px] shrink-0 items-center justify-center rounded-full ${
             searchActive ? "text-foreground" : "text-muted"
           }`}
         >

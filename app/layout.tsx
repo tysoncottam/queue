@@ -16,7 +16,11 @@ export const viewport: Viewport = {
   themeColor: "#000000",
   width: "device-width",
   initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
   viewportFit: "cover",
+  // Keyboard resizes the viewport rather than overlaying — matches iOS behavior
+  interactiveWidget: "resizes-content",
 };
 
 export default function RootLayout({

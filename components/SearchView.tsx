@@ -101,7 +101,7 @@ export function SearchView({ entries }: { entries: Entry[] }) {
               >
                 <Link
                   href={`/watch/${e.id}`}
-                  className="flex items-center gap-3 px-3 py-2.5 transition active:bg-surface-raised hover:bg-surface-raised"
+                  className="pressable flex items-center gap-3 px-3 py-2.5"
                 >
                   <div className="relative h-14 w-24 shrink-0 overflow-hidden rounded-lg bg-surface-raised">
                     {e.thumbnailUrl && (

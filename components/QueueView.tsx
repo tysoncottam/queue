@@ -238,7 +238,7 @@ export function QueueView({
         <button
           onClick={fetchNew}
           disabled={pending}
-          className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-surface text-foreground transition-[transform,opacity] duration-150 active:scale-90 disabled:opacity-50"
+          className="pressable-light inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-surface text-foreground disabled:opacity-50"
           aria-label="Refresh"
         >
           <ArrowClockwise
@@ -408,7 +408,7 @@ function ViewTab({
   return (
     <button
       onClick={onClick}
-      className={`flex-1 rounded-[8px] py-1.5 text-center font-medium transition-all duration-150 active:scale-[0.97] ${
+      className={`flex-1 rounded-[8px] py-1.5 text-center font-medium transition-colors duration-200 ${
         active
           ? "bg-surface-raised text-foreground shadow-[0_1px_3px_rgba(0,0,0,0.5)]"
           : "text-muted hover:text-foreground"
@@ -431,7 +431,7 @@ function SortPill({
   return (
     <button
       onClick={onClick}
-      className={`shrink-0 rounded-full px-3.5 py-1.5 text-footnote transition-[background-color,color,transform] duration-150 active:scale-95 ${
+      className={`shrink-0 rounded-full px-3.5 py-1.5 text-footnote transition-[background-color,color] duration-200 ${
         active
           ? "bg-foreground text-background font-medium"
           : "bg-surface text-muted hover:text-foreground"
@@ -573,7 +573,7 @@ function ChannelList({
         <li key={g.id} className={i === 0 ? "" : "hairline-top md:border-t-0"}>
           <button
             onClick={() => onPick(g.id)}
-            className="flex w-full items-center gap-3 px-3.5 py-2.5 text-left transition active:bg-surface-raised hover:bg-surface-raised"
+            className="pressable flex w-full items-center gap-3 px-3.5 py-2.5 text-left"
           >
             {g.latestThumb && (
               // eslint-disable-next-line @next/next/no-img-element
@@ -633,7 +633,7 @@ function CategoryList({
         <li key={g.id} className={i === 0 ? "" : "hairline-top md:border-t-0"}>
           <button
             onClick={() => onPick(g.id === "uncategorized" ? "" : g.id)}
-            className="flex w-full items-center justify-between px-3.5 py-3 text-left transition active:bg-surface-raised hover:bg-surface-raised"
+            className="pressable flex w-full items-center justify-between px-3.5 py-3 text-left"
           >
             <div className="min-w-0 flex-1">
               <p className="truncate text-body font-medium">{g.name}</p>
@@ -820,7 +820,7 @@ function RowButton({
         e.stopPropagation();
         onClick();
       }}
-      className={`inline-flex flex-1 items-center justify-center gap-1.5 rounded-lg py-1.5 text-footnote text-muted transition-[transform,background-color,color] duration-150 active:scale-[0.96] active:bg-surface-raised hover:bg-surface-raised hover:text-foreground ${
+      className={`pressable inline-flex flex-1 items-center justify-center gap-1.5 rounded-lg py-1.5 text-footnote text-muted hover:bg-surface-raised hover:text-foreground ${
         tone === "danger" ? "hover:text-danger" : ""
       }`}
     >

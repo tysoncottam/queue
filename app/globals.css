@@ -20,10 +20,16 @@
   --danger: #ff453a; /* systemRed dark */
   --warning: #ff9f0a; /* systemOrange dark */
 
-  /* Liquid glass — translucent blurred surface */
-  --glass-bg: rgba(22, 22, 24, 0.72);
+  /* systemFill — the overlay iOS uses for pressed rows/cells */
+  --fill-press: rgba(120, 120, 128, 0.24);
+  --fill-press-light: rgba(120, 120, 128, 0.16);
+
+  /* Liquid glass */
   --glass-border: rgba(255, 255, 255, 0.08);
   --glass-border-strong: rgba(255, 255, 255, 0.14);
+
+  /* Apple's interactive ease — matches UIKit push/pop, sheet drag, etc. */
+  --ease-ios: cubic-bezier(0.32, 0.72, 0, 1);
 }
 
 @theme inline {
@@ -45,6 +51,12 @@
   --font-mono:
     ui-monospace, "SF Mono", Menlo, Monaco, Consolas, "Liberation Mono",
     monospace;
+  --ease-ios: cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+html {
+  /* Kill whole-page rubber band — only scrollable regions should bounce */
+  overscroll-behavior-y: none;
 }
 
 html,
@@ -52,16 +64,17 @@ body {
   background: var(--background);
   color: var(--foreground);
   font-family: var(--font-sans);
-  font-feature-settings: "cv11", "ss01", "ss03";
+  /* Enable SF Pro stylistic sets: straight-sided 6/9 + one-storey a */
+  font-feature-settings: "ss01", "cv11";
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   text-rendering: optimizeLegibility;
+  /* iOS applies slight negative tracking by default */
+  letter-spacing: -0.011em;
 }
 
 body {
   min-height: 100dvh;
-  /* iOS SF Pro uses slightly tighter letter spacing */
-  letter-spacing: -0.011em;
 }
 
 * {
@@ -85,13 +98,54 @@ select {
   border-radius: 4px;
 }
 
-/* Allow gentle overscroll bounce on iOS */
-html {
-  overscroll-behavior-y: auto;
+/* iOS-style route transitions — fires on App Router navigations */
+@view-transition {
+  navigation: auto;
+}
+
+::view-transition-old(root) {
+  animation: 320ms var(--ease-ios) both page-leave;
+}
+::view-transition-new(root) {
+  animation: 320ms var(--ease-ios) both page-enter;
+}
+
+@keyframes page-leave {
+  to {
+    opacity: 0;
+    transform: translateX(-8%);
+  }
+}
+@keyframes page-enter {
+  from {
+    opacity: 0;
+    transform: translateX(8%);
+  }
+}
+
+/* Accessibility: honor reduced motion + reduced transparency */
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-old(root),
+  ::view-transition-new(root) {
+    animation-duration: 0.001ms;
+  }
+}
+
+@media (prefers-reduced-transparency: reduce) {
+  .glass,
+  .glass-strong,
+  .glass-pill {
+    background: rgba(22, 22, 24, 0.96) !important;
+    -webkit-backdrop-filter: none !important;
+    backdrop-filter: none !important;
+  }
+  .glass-pill::before {
+    display: none !important;
+  }
 }
 
 @layer utilities {
-  /* Liquid Glass: translucent blurred surface (navigation chrome, sheets) */
+  /* Liquid Glass — blurred floating surface (nav chrome, sheets) */
   .glass {
     background: rgba(28, 28, 30, 0.55);
     -webkit-backdrop-filter: saturate(200%) blur(36px);
@@ -102,15 +156,44 @@ html {
     -webkit-backdrop-filter: saturate(200%) blur(48px);
     backdrop-filter: saturate(200%) blur(48px);
   }
-  /* Floating pill glass — iOS 26 nav style */
+
+  /* iOS 26 floating pill — tinted glass + specular highlights + chromatic rim */
   .glass-pill {
-    background: rgba(38, 38, 42, 0.42);
-    -webkit-backdrop-filter: saturate(220%) blur(48px);
-    backdrop-filter: saturate(220%) blur(48px);
+    position: relative;
+    background: rgba(40, 40, 44, 0.42);
+    -webkit-backdrop-filter: saturate(220%) blur(44px);
+    backdrop-filter: saturate(220%) blur(44px);
     box-shadow:
-      inset 0 0.5px 0 rgba(255, 255, 255, 0.12),
-      inset 0 0 0 0.5px rgba(255, 255, 255, 0.05),
-      0 10px 40px rgba(0, 0, 0, 0.5);
+      inset 0 1px 0 rgba(255, 255, 255, 0.22), /* top specular */
+      inset 0 -1px 0 rgba(255, 255, 255, 0.05), /* bottom counter-light */
+      inset 0 0 0 0.5px rgba(255, 255, 255, 0.1), /* hairline */
+      0 10px 40px rgba(0, 0, 0, 0.5); /* cast */
+    isolation: isolate;
+  }
+  /* Subtle chromatic rim — the thing that makes iOS 26 glass feel alive */
+  .glass-pill::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    padding: 1px;
+    background: conic-gradient(
+      from 210deg,
+      rgba(255, 255, 255, 0) 0%,
+      rgba(255, 200, 230, 0.35) 18%,
+      rgba(180, 225, 255, 0.35) 55%,
+      rgba(255, 255, 255, 0) 85%
+    );
+    -webkit-mask:
+      linear-gradient(#000 0 0) content-box,
+      linear-gradient(#000 0 0);
+    mask:
+      linear-gradient(#000 0 0) content-box,
+      linear-gradient(#000 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    pointer-events: none;
+    z-index: 1;
   }
 
   /* iOS hairline separators (0.5px) */
@@ -124,56 +207,71 @@ html {
     border-bottom: 0.5px solid var(--separator);
   }
 
+  /* iOS press feedback — systemFill overlay with 0ms-in / 200ms-out timing.
+     This is the #1 thing that makes web-ui feel wrong on iOS — they use
+     scale transforms instead of this subtle fill overlay. */
+  .pressable {
+    transition: background-color 220ms ease;
+  }
+  .pressable:active {
+    background-color: var(--fill-press);
+    transition-duration: 0ms;
+    transition-delay: 50ms;
+  }
+  .pressable-light:active {
+    background-color: var(--fill-press-light);
+  }
+
   /* Typography ramp — iOS Human Interface Guidelines */
   .text-large-title {
     font-size: 34px;
     line-height: 41px;
-    letter-spacing: -0.024em;
+    letter-spacing: -0.026em;
     font-weight: 700;
   }
   .text-title-1 {
     font-size: 28px;
     line-height: 34px;
-    letter-spacing: -0.018em;
+    letter-spacing: -0.02em;
     font-weight: 700;
   }
   .text-title-2 {
     font-size: 22px;
     line-height: 28px;
-    letter-spacing: -0.016em;
+    letter-spacing: -0.018em;
     font-weight: 600;
   }
   .text-title-3 {
     font-size: 20px;
     line-height: 25px;
-    letter-spacing: -0.014em;
+    letter-spacing: -0.016em;
     font-weight: 600;
   }
   .text-headline {
     font-size: 17px;
     line-height: 22px;
-    letter-spacing: -0.011em;
+    letter-spacing: -0.013em;
     font-weight: 600;
   }
   .text-body {
     font-size: 17px;
     line-height: 22px;
-    letter-spacing: -0.011em;
+    letter-spacing: -0.013em;
   }
   .text-callout {
     font-size: 16px;
     line-height: 21px;
-    letter-spacing: -0.008em;
+    letter-spacing: -0.011em;
   }
   .text-subhead {
     font-size: 15px;
     line-height: 20px;
-    letter-spacing: -0.005em;
+    letter-spacing: -0.008em;
   }
   .text-footnote {
     font-size: 13px;
     line-height: 18px;
-    letter-spacing: 0;
+    letter-spacing: -0.002em;
   }
   .text-caption {
     font-size: 12px;
@@ -187,5 +285,20 @@ html {
   }
   .scrollbar-hidden::-webkit-scrollbar {
     display: none;
+  }
+
+  /* Grouped list: iOS hairline separator inset from the label */
+  .separator-inset {
+    position: relative;
+  }
+  .separator-inset + .separator-inset::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: var(--separator-inset-left, 16px);
+    right: 0;
+    height: 0.5px;
+    background: var(--separator);
+    pointer-events: none;
   }
 }

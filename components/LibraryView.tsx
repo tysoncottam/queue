@@ -92,21 +92,21 @@ export function LibraryView({
                   {tab === "saved" ? (
                     <button
                       onClick={() => restore(e.id)}
-                      className="rounded-lg px-2 py-1 text-blue transition active:scale-95 hover:opacity-80"
+                      className="rounded-lg px-2 py-1 text-blue transition hover:opacity-70 active:opacity-50"
                     >
                       Move back
                     </button>
                   ) : (
                     <button
                       onClick={() => restore(e.id)}
-                      className="rounded-lg px-2 py-1 text-blue transition active:scale-95 hover:opacity-80"
+                      className="rounded-lg px-2 py-1 text-blue transition hover:opacity-70 active:opacity-50"
                     >
                       Watch again
                     </button>
                   )}
                   <button
                     onClick={() => remove(e.id)}
-                    className="rounded-lg px-2 py-1 text-danger transition active:scale-95 hover:opacity-80"
+                    className="rounded-lg px-2 py-1 text-danger transition hover:opacity-70 active:opacity-50"
                   >
                     Remove
                   </button>
