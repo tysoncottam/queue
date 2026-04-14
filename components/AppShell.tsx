@@ -1,13 +1,7 @@
 import Image from "next/image";
 import { signOut } from "@/auth";
-import {
-  BookmarksSimple,
-  ListDashes,
-  MagnifyingGlass,
-  PlusCircle,
-} from "@phosphor-icons/react/dist/ssr";
 import { BottomTabs } from "./BottomTabs";
-import { DesktopNavLink } from "./DesktopNavLink";
+import { DesktopNav } from "./DesktopNavLink";
 
 export function AppShell({
   children,
@@ -18,38 +12,12 @@ export function AppShell({
 }) {
   return (
     <div className="flex min-h-dvh flex-col">
-      {/* Desktop top nav — hidden on mobile (bottom tabs take its place) */}
       <header
         className="glass hairline-bottom sticky top-0 z-30 hidden sm:block"
         style={{ paddingTop: "env(safe-area-inset-top)" }}
       >
         <div className="mx-auto flex w-full max-w-[1600px] items-center gap-1 px-6 py-2.5 lg:px-8">
-          <nav className="flex items-center gap-1">
-            <DesktopNavLink href="/" icon={ListDashes} match={(p) => p === "/"}>
-              Videos
-            </DesktopNavLink>
-            <DesktopNavLink
-              href="/searches"
-              icon={MagnifyingGlass}
-              match={(p) => p.startsWith("/searches")}
-            >
-              Saved lists
-            </DesktopNavLink>
-            <DesktopNavLink
-              href="/add"
-              icon={PlusCircle}
-              match={(p) => p === "/add"}
-            >
-              Add
-            </DesktopNavLink>
-            <DesktopNavLink
-              href="/library"
-              icon={BookmarksSimple}
-              match={(p) => p.startsWith("/library")}
-            >
-              Library
-            </DesktopNavLink>
-          </nav>
+          <DesktopNav />
           <form
             className="ml-auto"
             action={async () => {
