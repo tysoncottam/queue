@@ -93,14 +93,24 @@ html {
 @layer utilities {
   /* Liquid Glass: translucent blurred surface (navigation chrome, sheets) */
   .glass {
-    background: var(--glass-bg);
-    -webkit-backdrop-filter: saturate(180%) blur(30px);
-    backdrop-filter: saturate(180%) blur(30px);
+    background: rgba(28, 28, 30, 0.55);
+    -webkit-backdrop-filter: saturate(200%) blur(36px);
+    backdrop-filter: saturate(200%) blur(36px);
   }
   .glass-strong {
-    background: rgba(22, 22, 24, 0.85);
-    -webkit-backdrop-filter: saturate(180%) blur(40px);
-    backdrop-filter: saturate(180%) blur(40px);
+    background: rgba(22, 22, 24, 0.8);
+    -webkit-backdrop-filter: saturate(200%) blur(48px);
+    backdrop-filter: saturate(200%) blur(48px);
+  }
+  /* Floating pill glass — iOS 26 nav style */
+  .glass-pill {
+    background: rgba(38, 38, 42, 0.42);
+    -webkit-backdrop-filter: saturate(220%) blur(48px);
+    backdrop-filter: saturate(220%) blur(48px);
+    box-shadow:
+      inset 0 0.5px 0 rgba(255, 255, 255, 0.12),
+      inset 0 0 0 0.5px rgba(255, 255, 255, 0.05),
+      0 10px 40px rgba(0, 0, 0, 0.5);
   }
 
   /* iOS hairline separators (0.5px) */

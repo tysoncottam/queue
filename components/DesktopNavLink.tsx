@@ -7,6 +7,7 @@ import {
   ListDashes,
   MagnifyingGlass,
   PlusCircle,
+  Rows,
 } from "@phosphor-icons/react";
 
 const LINKS = [
@@ -14,7 +15,7 @@ const LINKS = [
   {
     href: "/searches",
     label: "Saved lists",
-    icon: MagnifyingGlass,
+    icon: Rows,
     match: (p: string) => p.startsWith("/searches"),
   },
   {
@@ -22,6 +23,12 @@ const LINKS = [
     label: "Add",
     icon: PlusCircle,
     match: (p: string) => p === "/add",
+  },
+  {
+    href: "/search",
+    label: "Search",
+    icon: MagnifyingGlass,
+    match: (p: string) => p.startsWith("/search") && !p.startsWith("/searches"),
   },
   {
     href: "/library",

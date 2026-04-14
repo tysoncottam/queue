@@ -20,13 +20,11 @@ import {
   CaretRight,
   Check,
   ListDashes,
-  MagnifyingGlass,
   Prohibit,
   Shuffle,
   SortAscending,
   SquaresFour,
   TelevisionSimple,
-  X as XIcon,
 } from "@phosphor-icons/react";
 import { formatDuration, formatRelative } from "@/lib/format";
 import { categoryName } from "@/lib/categories";
@@ -228,20 +226,8 @@ export function QueueView({
     return xs;
   }, [filtered, sort, shuffleSeed]);
 
-  const [query, setQuery] = useState("");
-  const q = query.trim().toLowerCase();
-
-  const searched = useMemo(() => {
-    if (!q) return sorted;
-    return sorted.filter(
-      (e) =>
-        e.title.toLowerCase().includes(q) ||
-        e.channelTitle.toLowerCase().includes(q)
-    );
-  }, [sorted, q]);
-
-  const inProgress = searched.filter((e) => e.status === "in_progress");
-  const fresh = searched.filter((e) => e.status === "new");
+  const inProgress = sorted.filter((e) => e.status === "in_progress");
+  const fresh = sorted.filter((e) => e.status === "new");
   const hasAnything = inProgress.length + fresh.length > 0;
 
   const [pullDistance, pullRef] = usePullToRefresh(fetchNew, pending);
@@ -269,31 +255,6 @@ export function QueueView({
           />
         </button>
       </div>
-
-      {/* Search field — iOS style */}
-      <label className="relative block">
-        <MagnifyingGlass
-          size={16}
-          className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-muted-2"
-        />
-        <input
-          type="search"
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          placeholder="Search"
-          className="h-10 w-full rounded-xl bg-surface pl-9 pr-10 text-body placeholder:text-muted-2 focus:outline-none"
-        />
-        {query && (
-          <button
-            type="button"
-            onClick={() => setQuery("")}
-            className="absolute right-2 top-1/2 -translate-y-1/2 rounded-full p-1.5 text-muted-2 transition hover:text-foreground"
-            aria-label="Clear search"
-          >
-            <XIcon size={14} weight="bold" />
-          </button>
-        )}
-      </label>
 
       {/* View tabs — iOS segmented control */}
       <div className="flex w-full items-stretch rounded-[12px] bg-surface p-0.5 text-subhead">
