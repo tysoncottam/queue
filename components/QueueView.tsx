@@ -1,6 +1,12 @@
 "use client";
 
-import { useEffect, useMemo, useState, useTransition } from "react";
+import {
+  useEffect,
+  useMemo,
+  useOptimistic,
+  useState,
+  useTransition,
+} from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { motion, AnimatePresence, PanInfo } from "framer-motion";
@@ -53,10 +59,12 @@ export function QueueView({
   const router = useRouter();
   const params = useSearchParams();
   const [sort, setSort] = useState<Sort>(initialSort);
-  const [local, setLocal] = useState<QueueEntry[]>(entries);
   const [pending, startTransition] = useTransition();
-
-  useEffect(() => setLocal(entries), [entries]);
+  const [optimisticEntries, removeOptimistic] = useOptimistic(
+    entries,
+    (state: QueueEntry[], removedId: string) =>
+      state.filter((e) => e.id !== removedId)
+  );
 
   const view = (params.get("view") as View) ?? initialView ?? "all";
   const channelId = params.get("channel") ?? initialChannelId;
@@ -72,17 +80,19 @@ export function QueueView({
     router.replace(qs ? `/?${qs}` : "/", { scroll: false });
   }
 
-  async function updateState(
+  function updateState(
     videoId: string,
     status: QueueEntry["status"] | "remove"
   ) {
-    setLocal((prev) => prev.filter((e) => e.id !== videoId));
-    await fetch(`/api/videos/${videoId}/state`, {
-      method: "PATCH",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({ status }),
+    startTransition(async () => {
+      removeOptimistic(videoId);
+      await fetch(`/api/videos/${videoId}/state`, {
+        method: "PATCH",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ status }),
+      });
+      router.refresh();
     });
-    startTransition(() => router.refresh());
   }
 
   async function fetchNew() {
@@ -94,18 +104,20 @@ export function QueueView({
     ? {
         type: "channel" as const,
         label:
-          local.find((e) => e.channelId === channelId)?.channelTitle ??
-          "Channel",
+          optimisticEntries.find((e) => e.channelId === channelId)
+            ?.channelTitle ?? "Channel",
       }
     : categoryId
     ? { type: "category" as const, label: categoryName(categoryId) }
     : null;
 
   const filtered = useMemo(() => {
-    if (channelId) return local.filter((e) => e.channelId === channelId);
-    if (categoryId) return local.filter((e) => e.categoryId === categoryId);
-    return local;
-  }, [local, channelId, categoryId]);
+    if (channelId)
+      return optimisticEntries.filter((e) => e.channelId === channelId);
+    if (categoryId)
+      return optimisticEntries.filter((e) => e.categoryId === categoryId);
+    return optimisticEntries;
+  }, [optimisticEntries, channelId, categoryId]);
 
   const sorted = useMemo(() => {
     const xs = [...filtered];
@@ -138,7 +150,9 @@ export function QueueView({
           }
         >
           All
-          <span className="ml-1.5 text-xs text-muted">{local.length}</span>
+          <span className="ml-1.5 text-xs text-muted">
+            {optimisticEntries.length}
+          </span>
         </ViewTab>
         <ViewTab
           active={view === "channels" || !!channelId}
@@ -179,9 +193,9 @@ export function QueueView({
       )}
 
       {view === "channels" && !channelId ? (
-        <ChannelList entries={local} onPick={(id) => setParam({ view: null, channel: id })} />
+        <ChannelList entries={optimisticEntries} onPick={(id) => setParam({ view: null, channel: id })} />
       ) : view === "categories" && !categoryId ? (
-        <CategoryList entries={local} onPick={(id) => setParam({ view: null, category: id })} />
+        <CategoryList entries={optimisticEntries} onPick={(id) => setParam({ view: null, category: id })} />
       ) : (
         <>
           <div className="flex items-center justify-between">

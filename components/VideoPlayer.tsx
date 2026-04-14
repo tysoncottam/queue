@@ -92,29 +92,37 @@ export function VideoPlayer({
     const rounded = Math.floor(t);
     if (!forcedStatus && Math.abs(rounded - lastSavedRef.current) < 5) return;
     lastSavedRef.current = rounded;
-    await fetch(`/api/videos/${videoId}/state`, {
-      method: "PATCH",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({
-        progressSeconds: rounded,
-        status: forcedStatus ?? "in_progress",
-      }),
-    }).catch(() => {});
+    try {
+      await fetch(`/api/videos/${videoId}/state`, {
+        method: "PATCH",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          progressSeconds: rounded,
+          status: forcedStatus ?? "in_progress",
+        }),
+        // keepalive lets the request finish even during page unload
+        keepalive: true,
+      });
+    } catch (err) {
+      console.warn("Queue: failed to save playback progress", err);
+    }
   }
 
   useEffect(() => {
     if (!ready) return;
     const interval = setInterval(() => saveProgress(), 10_000);
     const onHide = () => saveProgress();
+    const onVisibility = () => {
+      if (document.visibilityState === "hidden") saveProgress();
+    };
     window.addEventListener("pagehide", onHide);
     window.addEventListener("beforeunload", onHide);
-    document.addEventListener("visibilitychange", () => {
-      if (document.visibilityState === "hidden") saveProgress();
-    });
+    document.addEventListener("visibilitychange", onVisibility);
     return () => {
       clearInterval(interval);
       window.removeEventListener("pagehide", onHide);
       window.removeEventListener("beforeunload", onHide);
+      document.removeEventListener("visibilitychange", onVisibility);
       saveProgress();
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
