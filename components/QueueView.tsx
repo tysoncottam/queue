@@ -402,8 +402,8 @@ function VideoRow({
 
   function onDragEnd(_: unknown, info: PanInfo) {
     const offset = info.offset.x;
-    if (offset < -120) onAction(entry.id, "watched");
-    else if (offset > 120) onAction(entry.id, "saved_later");
+    if (offset < -120) onAction(entry.id, "not_interested");
+    else if (offset > 120) onAction(entry.id, "watched");
     setDragX(0);
   }
 
@@ -416,7 +416,7 @@ function VideoRow({
       layout
       exit={{ opacity: 0, scale: 0.95 }}
       transition={{ type: "spring", stiffness: 380, damping: 30 }}
-      className="relative"
+      className="relative h-full"
     >
       {narrow && (
         <div
@@ -428,14 +428,14 @@ function VideoRow({
               dragX > 20 ? "opacity-100" : "opacity-0"
             }`}
           >
-            ← Save for later
+            ← Watched
           </span>
           <span
             className={`text-danger transition-opacity ${
               dragX < -20 ? "opacity-100" : "opacity-0"
             }`}
           >
-            Watched →
+            Not interested →
           </span>
         </div>
       )}
@@ -445,7 +445,7 @@ function VideoRow({
         dragElastic={0.6}
         onDrag={(_, info) => setDragX(info.offset.x)}
         onDragEnd={onDragEnd}
-        className="relative"
+        className="relative h-full"
       >
         <VideoCard entry={entry} progressPct={progressPct} onAction={onAction} />
       </motion.div>
@@ -462,9 +462,17 @@ function VideoCard({
   progressPct: number;
   onAction: (id: string, status: QueueEntry["status"] | "remove") => void;
 }) {
+  const showSavedSearch =
+    !!entry.savedSearch &&
+    entry.savedSearch.name.trim().toLowerCase() !==
+      entry.channelTitle.trim().toLowerCase();
+
   return (
-    <div className="group relative overflow-hidden rounded-xl bg-surface">
-      <Link href={`/watch/${entry.id}`} className="block focus-visible:outline-none">
+    <div className="group relative flex h-full flex-col overflow-hidden rounded-xl bg-surface">
+      <Link
+        href={`/watch/${entry.id}`}
+        className="flex flex-1 flex-col focus-visible:outline-none"
+      >
         <div className="relative aspect-video w-full overflow-hidden bg-surface-raised">
           {entry.thumbnailUrl && (
             // eslint-disable-next-line @next/next/no-img-element
@@ -488,18 +496,18 @@ function VideoCard({
             </div>
           )}
         </div>
-        <div className="space-y-1.5 px-3.5 pt-3 pb-3">
+        <div className="flex flex-1 flex-col gap-1.5 px-3.5 pt-3 pb-3">
           <h3 className="line-clamp-2 text-sm font-medium leading-snug">
             {entry.title}
           </h3>
-          <div className="flex items-center gap-1.5 text-xs text-muted">
+          <div className="mt-auto flex flex-wrap items-center gap-x-1.5 text-xs text-muted">
             <span>{entry.channelTitle}</span>
             <span>·</span>
             <span>{formatRelative(new Date(entry.publishedAt))}</span>
-            {entry.savedSearch && (
+            {showSavedSearch && (
               <>
                 <span>·</span>
-                <span className="truncate">{entry.savedSearch.name}</span>
+                <span className="truncate">{entry.savedSearch!.name}</span>
               </>
             )}
           </div>
