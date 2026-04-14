@@ -6,6 +6,7 @@ import {
   MagnifyingGlass,
   PlusCircle,
 } from "@phosphor-icons/react/dist/ssr";
+import { BottomTabs } from "./BottomTabs";
 
 export function AppShell({
   children,
@@ -21,27 +22,27 @@ export function AppShell({
           <Link href="/" className="text-base font-semibold tracking-tight">
             Queue
           </Link>
-          <nav className="ml-2 flex items-center gap-1 text-sm text-muted">
+          <nav className="ml-2 hidden items-center gap-1 text-sm text-muted sm:flex">
             <Link
               href="/searches"
               className="inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 hover:bg-surface hover:text-foreground"
             >
               <MagnifyingGlass size={16} />
-              <span className="hidden sm:inline">Searches</span>
+              Searches
             </Link>
             <Link
               href="/add"
               className="inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 hover:bg-surface hover:text-foreground"
             >
               <PlusCircle size={16} />
-              <span className="hidden sm:inline">Add</span>
+              Add
             </Link>
             <Link
               href="/library"
               className="inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 hover:bg-surface hover:text-foreground"
             >
               <BookmarksSimple size={16} />
-              <span className="hidden sm:inline">Library</span>
+              Library
             </Link>
           </nav>
           <div className="ml-auto flex items-center gap-2">
@@ -74,9 +75,15 @@ export function AppShell({
           </div>
         </div>
       </header>
-      <main className="mx-auto w-full max-w-[1600px] flex-1 px-4 pb-24 pt-6 sm:px-6 lg:px-8">
+      <main
+        className="mx-auto w-full max-w-[1600px] flex-1 px-4 pt-6 sm:px-6 sm:pb-24 lg:px-8"
+        style={{
+          paddingBottom: "calc(env(safe-area-inset-bottom) + 6rem)",
+        }}
+      >
         {children}
       </main>
+      <BottomTabs />
     </div>
   );
 }

@@ -28,6 +28,7 @@ import {
 } from "@phosphor-icons/react";
 import { formatDuration, formatRelative } from "@/lib/format";
 import { categoryName } from "@/lib/categories";
+import { Toast, type ToastData } from "./Toast";
 
 function useIsNarrow() {
   const [narrow, setNarrow] = useState(false);
@@ -95,11 +96,37 @@ export function QueueView({
   const [sort, setSort] = useState<Sort>(initialSort);
   const [shuffleSeed, setShuffleSeed] = useState(() => Date.now() % 2147483647);
   const [pending, startTransition] = useTransition();
-  const [optimisticEntries, removeOptimistic] = useOptimistic(
+  type OptimisticAction =
+    | { type: "remove"; id: string }
+    | { type: "restore"; entry: QueueEntry };
+  const [optimisticEntries, applyOptimistic] = useOptimistic(
     entries,
-    (state: QueueEntry[], removedId: string) =>
-      state.filter((e) => e.id !== removedId)
+    (state: QueueEntry[], action: OptimisticAction) => {
+      if (action.type === "remove")
+        return state.filter((e) => e.id !== action.id);
+      if (action.type === "restore") {
+        if (state.some((e) => e.id === action.entry.id)) return state;
+        return [action.entry, ...state];
+      }
+      return state;
+    }
   );
+
+  const [toast, setToast] = useState<ToastData | null>(null);
+  const toastTimer = useRef<number | null>(null);
+  function showToast(next: ToastData, ms = 4500) {
+    if (toastTimer.current) window.clearTimeout(toastTimer.current);
+    setToast(next);
+    toastTimer.current = window.setTimeout(() => {
+      setToast((cur) => (cur?.id === next.id ? null : cur));
+      toastTimer.current = null;
+    }, ms);
+  }
+  function dismissToast() {
+    if (toastTimer.current) window.clearTimeout(toastTimer.current);
+    toastTimer.current = null;
+    setToast(null);
+  }
 
   const view = (params.get("view") as View) ?? initialView ?? "all";
   const channelId = params.get("channel") ?? initialChannelId;
@@ -116,17 +143,44 @@ export function QueueView({
   }
 
   function updateState(
-    videoId: string,
+    entry: QueueEntry,
     status: QueueEntry["status"] | "remove"
   ) {
+    const prior = { ...entry };
     startTransition(async () => {
-      removeOptimistic(videoId);
-      await fetch(`/api/videos/${videoId}/state`, {
+      applyOptimistic({ type: "remove", id: entry.id });
+      await fetch(`/api/videos/${entry.id}/state`, {
         method: "PATCH",
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ status }),
       });
       router.refresh();
+    });
+    const labels: Record<typeof status, string> = {
+      watched: "Marked as watched",
+      saved_later: "Saved for later",
+      not_interested: "Not interested",
+      new: "Moved to queue",
+      in_progress: "Marked in progress",
+      remove: "Removed",
+    };
+    showToast({
+      id: Date.now(),
+      message: labels[status] ?? "Updated",
+      undo: () => {
+        startTransition(async () => {
+          applyOptimistic({ type: "restore", entry: prior });
+          await fetch(`/api/videos/${entry.id}/state`, {
+            method: "PATCH",
+            headers: { "content-type": "application/json" },
+            body: JSON.stringify({
+              status: prior.status,
+              progressSeconds: prior.progressSeconds,
+            }),
+          });
+          router.refresh();
+        });
+      },
     });
   }
 
@@ -293,12 +347,35 @@ export function QueueView({
           {inProgress.length > 0 && (
             <section className="space-y-3">
               <SectionLabel>In progress</SectionLabel>
-              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-                <AnimatePresence initial={false}>
-                  {inProgress.map((entry) => (
-                    <VideoRow key={entry.id} entry={entry} onAction={updateState} />
-                  ))}
-                </AnimatePresence>
+              <div className="-mx-4 overflow-x-auto pb-2 sm:-mx-6 lg:-mx-8">
+                <div className="flex snap-x snap-mandatory gap-3 px-4 sm:px-6 lg:px-8 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+                  <AnimatePresence initial={false}>
+                    {inProgress.map((entry) => (
+                      <motion.div
+                        key={entry.id}
+                        layout
+                        exit={{ opacity: 0, scale: 0.95 }}
+                        transition={{ type: "spring", stiffness: 380, damping: 30 }}
+                        className="w-60 shrink-0 snap-start sm:w-64"
+                      >
+                        <VideoCard
+                          entry={entry}
+                          progressPct={
+                            entry.durationSeconds
+                              ? Math.min(
+                                  100,
+                                  (entry.progressSeconds /
+                                    entry.durationSeconds) *
+                                    100
+                                )
+                              : 0
+                          }
+                          onAction={updateState}
+                        />
+                      </motion.div>
+                    ))}
+                  </AnimatePresence>
+                </div>
               </div>
             </section>
           )}
@@ -319,6 +396,7 @@ export function QueueView({
           {!hasAnything && <EmptyState filtered={!!activeFilter} />}
         </>
       )}
+      <Toast toast={toast} onDismiss={dismissToast} />
     </div>
   );
 }
@@ -606,15 +684,15 @@ function VideoRow({
   onAction,
 }: {
   entry: QueueEntry;
-  onAction: (id: string, status: QueueEntry["status"] | "remove") => void;
+  onAction: (entry: QueueEntry, status: QueueEntry["status"] | "remove") => void;
 }) {
   const narrow = useIsNarrow();
   const [dragX, setDragX] = useState(0);
 
   function onDragEnd(_: unknown, info: PanInfo) {
     const offset = info.offset.x;
-    if (offset < -120) onAction(entry.id, "not_interested");
-    else if (offset > 120) onAction(entry.id, "watched");
+    if (offset < -120) onAction(entry, "not_interested");
+    else if (offset > 120) onAction(entry, "watched");
     setDragX(0);
   }
 
@@ -671,7 +749,7 @@ function VideoCard({
 }: {
   entry: QueueEntry;
   progressPct: number;
-  onAction: (id: string, status: QueueEntry["status"] | "remove") => void;
+  onAction: (entry: QueueEntry, status: QueueEntry["status"] | "remove") => void;
 }) {
   const showSavedSearch =
     !!entry.savedSearch &&
@@ -727,19 +805,19 @@ function VideoCard({
       <div className="flex items-center gap-1 border-t border-border/60 px-2 py-1.5 text-xs">
         <RowButton
           icon={Check}
-          onClick={() => onAction(entry.id, "watched")}
+          onClick={() => onAction(entry, "watched")}
         >
           Watched
         </RowButton>
         <RowButton
           icon={Bookmark}
-          onClick={() => onAction(entry.id, "saved_later")}
+          onClick={() => onAction(entry, "saved_later")}
         >
           Later
         </RowButton>
         <RowButton
           icon={Prohibit}
-          onClick={() => onAction(entry.id, "not_interested")}
+          onClick={() => onAction(entry, "not_interested")}
           tone="danger"
         >
           Not interested
