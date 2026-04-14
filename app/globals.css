@@ -1,42 +1,67 @@
 @import "tailwindcss";
 
 :root {
-  --background: #0a0a0a;
-  --surface: #141414;
-  --surface-raised: #1c1c1c;
-  --border: #262626;
-  --foreground: #fafafa;
-  --muted: #a1a1aa;
-  --accent: #34d399;
-  --accent-dim: #065f46;
-  --danger: #f87171;
+  /* iOS dark-mode system colors */
+  --background: #000000;
+  --surface: #1c1c1e;
+  --surface-raised: #2c2c2e;
+  --surface-grouped: #1c1c1e;
+  --separator: rgba(84, 84, 88, 0.36);
+  --separator-opaque: #38383a;
+
+  --foreground: #ffffff;
+  --muted: rgba(235, 235, 245, 0.6);
+  --muted-2: rgba(235, 235, 245, 0.3);
+  --muted-3: rgba(235, 235, 245, 0.18);
+
+  --accent: #30d158; /* systemGreen dark */
+  --accent-dim: rgba(48, 209, 88, 0.18);
+  --blue: #0a84ff; /* systemBlue dark */
+  --danger: #ff453a; /* systemRed dark */
+  --warning: #ff9f0a; /* systemOrange dark */
+
+  /* Liquid glass — translucent blurred surface */
+  --glass-bg: rgba(22, 22, 24, 0.72);
+  --glass-border: rgba(255, 255, 255, 0.08);
+  --glass-border-strong: rgba(255, 255, 255, 0.14);
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-surface: var(--surface);
   --color-surface-raised: var(--surface-raised);
-  --color-border: var(--border);
+  --color-border: var(--separator);
   --color-foreground: var(--foreground);
   --color-muted: var(--muted);
+  --color-muted-2: var(--muted-2);
   --color-accent: var(--accent);
   --color-accent-dim: var(--accent-dim);
+  --color-blue: var(--blue);
   --color-danger: var(--danger);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-warning: var(--warning);
+  --font-sans:
+    -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display",
+    system-ui, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  --font-mono:
+    ui-monospace, "SF Mono", Menlo, Monaco, Consolas, "Liberation Mono",
+    monospace;
 }
 
 html,
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: var(--font-geist-sans), system-ui, -apple-system, sans-serif;
+  font-family: var(--font-sans);
+  font-feature-settings: "cv11", "ss01", "ss03";
   -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
   text-rendering: optimizeLegibility;
 }
 
 body {
   min-height: 100dvh;
+  /* iOS SF Pro uses slightly tighter letter spacing */
+  letter-spacing: -0.011em;
 }
 
 * {
@@ -45,11 +70,112 @@ body {
 
 button {
   cursor: pointer;
+  font-family: inherit;
 }
 
-/* Focus ring — visible only via keyboard */
+input,
+textarea,
+select {
+  font-family: inherit;
+}
+
 :focus-visible {
   outline: 2px solid var(--accent);
   outline-offset: 2px;
   border-radius: 4px;
+}
+
+/* Allow gentle overscroll bounce on iOS */
+html {
+  overscroll-behavior-y: auto;
+}
+
+@layer utilities {
+  /* Liquid Glass: translucent blurred surface (navigation chrome, sheets) */
+  .glass {
+    background: var(--glass-bg);
+    -webkit-backdrop-filter: saturate(180%) blur(30px);
+    backdrop-filter: saturate(180%) blur(30px);
+  }
+  .glass-strong {
+    background: rgba(22, 22, 24, 0.85);
+    -webkit-backdrop-filter: saturate(180%) blur(40px);
+    backdrop-filter: saturate(180%) blur(40px);
+  }
+
+  /* iOS hairline separators (0.5px) */
+  .hairline {
+    box-shadow: inset 0 0 0 0.5px var(--separator);
+  }
+  .hairline-top {
+    border-top: 0.5px solid var(--separator);
+  }
+  .hairline-bottom {
+    border-bottom: 0.5px solid var(--separator);
+  }
+
+  /* Typography ramp — iOS Human Interface Guidelines */
+  .text-large-title {
+    font-size: 34px;
+    line-height: 41px;
+    letter-spacing: -0.024em;
+    font-weight: 700;
+  }
+  .text-title-1 {
+    font-size: 28px;
+    line-height: 34px;
+    letter-spacing: -0.018em;
+    font-weight: 700;
+  }
+  .text-title-2 {
+    font-size: 22px;
+    line-height: 28px;
+    letter-spacing: -0.016em;
+    font-weight: 600;
+  }
+  .text-title-3 {
+    font-size: 20px;
+    line-height: 25px;
+    letter-spacing: -0.014em;
+    font-weight: 600;
+  }
+  .text-headline {
+    font-size: 17px;
+    line-height: 22px;
+    letter-spacing: -0.011em;
+    font-weight: 600;
+  }
+  .text-body {
+    font-size: 17px;
+    line-height: 22px;
+    letter-spacing: -0.011em;
+  }
+  .text-callout {
+    font-size: 16px;
+    line-height: 21px;
+    letter-spacing: -0.008em;
+  }
+  .text-subhead {
+    font-size: 15px;
+    line-height: 20px;
+    letter-spacing: -0.005em;
+  }
+  .text-footnote {
+    font-size: 13px;
+    line-height: 18px;
+    letter-spacing: 0;
+  }
+  .text-caption {
+    font-size: 12px;
+    line-height: 16px;
+    letter-spacing: 0;
+  }
+
+  /* Hide scrollbars for horizontal scroll rows */
+  .scrollbar-hidden {
+    scrollbar-width: none;
+  }
+  .scrollbar-hidden::-webkit-scrollbar {
+    display: none;
+  }
 }

@@ -9,11 +9,11 @@ export default async function NewSearchPage() {
 
   return (
     <AppShell user={session.user}>
-      <div className="mb-6 max-w-xl">
-        <h1 className="text-lg font-semibold">New search</h1>
-        <p className="mt-1 text-sm text-muted">
+      <div className="mb-5 max-w-xl space-y-2">
+        <h1 className="text-large-title">New list</h1>
+        <p className="text-subhead text-muted">
           Pick a channel, optionally filter by keywords and date. Matching
-          videos are previewed on the right as you type.
+          videos preview on the right as you type.
         </p>
       </div>
       <NewSearchForm />

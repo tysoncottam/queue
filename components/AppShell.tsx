@@ -1,12 +1,13 @@
-import Link from "next/link";
-import { signOut } from "@/auth";
 import Image from "next/image";
+import { signOut } from "@/auth";
 import {
   BookmarksSimple,
+  ListDashes,
   MagnifyingGlass,
   PlusCircle,
 } from "@phosphor-icons/react/dist/ssr";
 import { BottomTabs } from "./BottomTabs";
+import { DesktopNavLink } from "./DesktopNavLink";
 
 export function AppShell({
   children,
@@ -17,71 +18,75 @@ export function AppShell({
 }) {
   return (
     <div className="flex min-h-dvh flex-col">
-      <header className="sticky top-0 z-20 border-b border-border/60 bg-background/80 pt-[env(safe-area-inset-top)] backdrop-blur">
-        <div className="mx-auto flex w-full max-w-[1600px] items-center gap-3 px-4 py-3 sm:px-6 lg:px-8">
-          <Link href="/" className="text-base font-semibold tracking-tight">
-            Queue
-          </Link>
-          <nav className="ml-2 hidden items-center gap-1 text-sm text-muted sm:flex">
-            <Link
+      {/* Desktop top nav — hidden on mobile (bottom tabs take its place) */}
+      <header
+        className="glass hairline-bottom sticky top-0 z-30 hidden sm:block"
+        style={{ paddingTop: "env(safe-area-inset-top)" }}
+      >
+        <div className="mx-auto flex w-full max-w-[1600px] items-center gap-1 px-6 py-2.5 lg:px-8">
+          <nav className="flex items-center gap-1">
+            <DesktopNavLink href="/" icon={ListDashes} match={(p) => p === "/"}>
+              Videos
+            </DesktopNavLink>
+            <DesktopNavLink
               href="/searches"
-              className="inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 hover:bg-surface hover:text-foreground"
+              icon={MagnifyingGlass}
+              match={(p) => p.startsWith("/searches")}
             >
-              <MagnifyingGlass size={16} />
-              Searches
-            </Link>
-            <Link
+              Saved lists
+            </DesktopNavLink>
+            <DesktopNavLink
               href="/add"
-              className="inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 hover:bg-surface hover:text-foreground"
+              icon={PlusCircle}
+              match={(p) => p === "/add"}
             >
-              <PlusCircle size={16} />
               Add
-            </Link>
-            <Link
+            </DesktopNavLink>
+            <DesktopNavLink
               href="/library"
-              className="inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 hover:bg-surface hover:text-foreground"
+              icon={BookmarksSimple}
+              match={(p) => p.startsWith("/library")}
             >
-              <BookmarksSimple size={16} />
               Library
-            </Link>
+            </DesktopNavLink>
           </nav>
-          <div className="ml-auto flex items-center gap-2">
-            <form
-              action={async () => {
-                "use server";
-                await signOut({ redirectTo: "/sign-in" });
-              }}
+          <form
+            className="ml-auto"
+            action={async () => {
+              "use server";
+              await signOut({ redirectTo: "/sign-in" });
+            }}
+          >
+            <button
+              type="submit"
+              className="hairline flex h-8 w-8 items-center justify-center overflow-hidden rounded-full bg-surface-raised text-caption text-muted transition hover:opacity-80"
+              aria-label="Sign out"
+              title={user.email ?? "Sign out"}
             >
-              <button
-                type="submit"
-                className="flex h-8 w-8 items-center justify-center overflow-hidden rounded-full bg-surface-raised text-xs text-muted ring-1 ring-border hover:ring-muted"
-                aria-label="Sign out"
-                title={user.email ?? "Sign out"}
-              >
-                {user.image ? (
-                  <Image
-                    src={user.image}
-                    alt=""
-                    width={32}
-                    height={32}
-                    className="h-full w-full object-cover"
-                    unoptimized
-                  />
-                ) : (
-                  (user.name?.[0] ?? "?").toUpperCase()
-                )}
-              </button>
-            </form>
-          </div>
+              {user.image ? (
+                <Image
+                  src={user.image}
+                  alt=""
+                  width={32}
+                  height={32}
+                  className="h-full w-full object-cover"
+                  unoptimized
+                />
+              ) : (
+                (user.name?.[0] ?? "?").toUpperCase()
+              )}
+            </button>
+          </form>
         </div>
       </header>
       <main
-        className="mx-auto w-full max-w-[1600px] flex-1 px-4 pt-6 sm:px-6 sm:pb-24 lg:px-8"
+        className="mx-auto w-full max-w-[1600px] flex-1 px-4 sm:px-6 lg:px-8"
         style={{
+          paddingTop: "calc(env(safe-area-inset-top) + 0.5rem)",
           paddingBottom: "calc(env(safe-area-inset-bottom) + 6rem)",
         }}
       >
-        {children}
+        <div className="pt-2 sm:pt-4">{children}</div>
       </main>
       <BottomTabs />
     </div>

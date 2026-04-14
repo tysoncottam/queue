@@ -70,13 +70,13 @@ export function Comments({
   }
 
   return (
-    <section className="rounded-xl bg-surface">
+    <section className="rounded-2xl bg-surface">
       <button
         onClick={() => onOpenChange(!open)}
-        className="flex w-full items-center justify-between px-4 py-3 text-left"
+        className="flex w-full items-center justify-between px-4 py-3.5 text-left"
       >
-        <span className="text-sm font-medium">Comments</span>
-        <span className="text-xs text-muted">{open ? "Hide" : "Show"}</span>
+        <span className="text-headline">Comments</span>
+        <span className="text-subhead text-blue">{open ? "Hide" : "Show"}</span>
       </button>
 
       {open && (

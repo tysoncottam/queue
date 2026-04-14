@@ -10,10 +10,10 @@ export default async function AddPage() {
   return (
     <AppShell user={session.user}>
       <div className="mx-auto max-w-xl">
-        <div className="mb-6">
-          <h1 className="text-lg font-semibold">Add a video</h1>
-          <p className="mt-1 text-sm text-muted">
-            Paste a YouTube link. We&rsquo;ll add it to your queue.
+        <div className="mb-5 space-y-2">
+          <h1 className="text-large-title">Add</h1>
+          <p className="text-subhead text-muted">
+            Paste a YouTube link and it goes into your videos.
           </p>
         </div>
         <AddVideoForm />

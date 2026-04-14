@@ -56,9 +56,9 @@ export default async function WatchPage({
       <div className="mb-4">
         <Link
           href="/"
-          className="inline-flex items-center gap-1 text-sm text-muted hover:text-foreground"
+          className="inline-flex items-center gap-0.5 text-subhead text-blue"
         >
-          ← Back to queue
+          ‹ Videos
         </Link>
       </div>
       <WatchShell

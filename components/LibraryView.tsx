@@ -47,10 +47,10 @@ export function LibraryView({
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex gap-1 text-sm">
+    <div className="space-y-5">
+      <div className="flex w-full items-stretch rounded-[12px] bg-surface p-0.5 text-subhead">
         <TabButton active={tab === "saved"} onClick={() => setTab("saved")}>
-          Saved for later ({saved.length})
+          Saved ({saved.length})
         </TabButton>
         <TabButton active={tab === "watched"} onClick={() => setTab("watched")}>
           Watched ({watched.length})
@@ -58,11 +58,11 @@ export function LibraryView({
       </div>
 
       {list.length === 0 ? (
-        <p className="mt-12 text-center text-sm text-muted">Empty.</p>
+        <p className="mt-12 text-center text-subhead text-muted">Empty.</p>
       ) : (
         <ul className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3">
           {list.map((e) => (
-            <li key={e.id} className="flex gap-3 rounded-xl bg-surface p-3">
+            <li key={e.id} className="flex gap-3 rounded-2xl bg-surface p-3">
               <Link
                 href={`/watch/${e.id}`}
                 className="block shrink-0 overflow-hidden rounded-lg"
@@ -79,34 +79,34 @@ export function LibraryView({
               <div className="min-w-0 flex-1 space-y-1">
                 <Link
                   href={`/watch/${e.id}`}
-                  className="line-clamp-2 text-sm font-medium leading-snug"
+                  className="line-clamp-2 text-subhead font-semibold leading-[1.3]"
                 >
                   {e.title}
                 </Link>
-                <p className="text-xs text-muted">
+                <p className="text-footnote text-muted">
                   {e.channelTitle} · {formatRelative(new Date(e.publishedAt))}
                   {e.durationSeconds != null &&
                     ` · ${formatDuration(e.durationSeconds)}`}
                 </p>
-                <div className="flex gap-1 pt-1 text-xs">
+                <div className="flex gap-1 pt-1 text-footnote">
                   {tab === "saved" ? (
                     <button
                       onClick={() => restore(e.id)}
-                      className="rounded-lg px-2 py-1 text-muted hover:bg-surface-raised hover:text-foreground"
+                      className="rounded-lg px-2 py-1 text-blue transition active:scale-95 hover:opacity-80"
                     >
-                      Move to queue
+                      Move back
                     </button>
                   ) : (
                     <button
                       onClick={() => restore(e.id)}
-                      className="rounded-lg px-2 py-1 text-muted hover:bg-surface-raised hover:text-foreground"
+                      className="rounded-lg px-2 py-1 text-blue transition active:scale-95 hover:opacity-80"
                     >
                       Watch again
                     </button>
                   )}
                   <button
                     onClick={() => remove(e.id)}
-                    className="rounded-lg px-2 py-1 text-muted hover:bg-surface-raised hover:text-danger"
+                    className="rounded-lg px-2 py-1 text-danger transition active:scale-95 hover:opacity-80"
                   >
                     Remove
                   </button>
@@ -132,9 +132,9 @@ function TabButton({
   return (
     <button
       onClick={onClick}
-      className={`rounded-full px-3 py-1.5 transition ${
+      className={`flex-1 rounded-[10px] py-1.5 font-medium transition ${
         active
-          ? "bg-surface-raised text-foreground"
+          ? "bg-surface-raised text-foreground shadow-[0_1px_3px_rgba(0,0,0,0.5)]"
           : "text-muted hover:text-foreground"
       }`}
     >

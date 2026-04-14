@@ -15,10 +15,10 @@ export default async function LibraryPage() {
 
   return (
     <AppShell user={session.user}>
-      <LibraryView
-        saved={saved.map(toDTO)}
-        watched={watched.map(toDTO)}
-      />
+      <div className="space-y-5">
+        <h1 className="text-large-title">Library</h1>
+        <LibraryView saved={saved.map(toDTO)} watched={watched.map(toDTO)} />
+      </div>
     </AppShell>
   );
 }

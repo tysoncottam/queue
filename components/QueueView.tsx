@@ -20,11 +20,13 @@ import {
   CaretRight,
   Check,
   ListDashes,
+  MagnifyingGlass,
   Prohibit,
   Shuffle,
   SortAscending,
   SquaresFour,
   TelevisionSimple,
+  X as XIcon,
 } from "@phosphor-icons/react";
 import { formatDuration, formatRelative } from "@/lib/format";
 import { categoryName } from "@/lib/categories";
@@ -226,18 +228,75 @@ export function QueueView({
     return xs;
   }, [filtered, sort, shuffleSeed]);
 
-  const inProgress = sorted.filter((e) => e.status === "in_progress");
-  const fresh = sorted.filter((e) => e.status === "new");
+  const [query, setQuery] = useState("");
+  const q = query.trim().toLowerCase();
+
+  const searched = useMemo(() => {
+    if (!q) return sorted;
+    return sorted.filter(
+      (e) =>
+        e.title.toLowerCase().includes(q) ||
+        e.channelTitle.toLowerCase().includes(q)
+    );
+  }, [sorted, q]);
+
+  const inProgress = searched.filter((e) => e.status === "in_progress");
+  const fresh = searched.filter((e) => e.status === "new");
   const hasAnything = inProgress.length + fresh.length > 0;
 
   const [pullDistance, pullRef] = usePullToRefresh(fetchNew, pending);
 
   return (
-    <div className="space-y-6" ref={pullRef as React.RefObject<HTMLDivElement>}>
+    <div
+      className="space-y-5"
+      ref={pullRef as React.RefObject<HTMLDivElement>}
+    >
       <PullIndicator distance={pullDistance} refreshing={pending} />
 
-      {/* View tabs — segmented control */}
-      <div className="inline-flex items-center gap-0.5 rounded-full bg-surface p-1 text-sm">
+      {/* iOS large title + refresh action */}
+      <div className="flex items-end justify-between gap-3">
+        <h1 className="text-large-title">Videos</h1>
+        <button
+          onClick={fetchNew}
+          disabled={pending}
+          className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-surface-raised text-foreground transition hover:opacity-80 disabled:opacity-50"
+          aria-label="Refresh"
+        >
+          <ArrowClockwise
+            size={18}
+            weight="bold"
+            className={pending ? "animate-spin" : ""}
+          />
+        </button>
+      </div>
+
+      {/* Search field — iOS style */}
+      <label className="relative block">
+        <MagnifyingGlass
+          size={16}
+          className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-muted-2"
+        />
+        <input
+          type="search"
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          placeholder="Search"
+          className="h-10 w-full rounded-xl bg-surface pl-9 pr-10 text-body placeholder:text-muted-2 focus:outline-none"
+        />
+        {query && (
+          <button
+            type="button"
+            onClick={() => setQuery("")}
+            className="absolute right-2 top-1/2 -translate-y-1/2 rounded-full p-1.5 text-muted-2 transition hover:text-foreground"
+            aria-label="Clear search"
+          >
+            <XIcon size={14} weight="bold" />
+          </button>
+        )}
+      </label>
+
+      {/* View tabs — iOS segmented control */}
+      <div className="flex w-full items-stretch rounded-[12px] bg-surface p-0.5 text-subhead">
         <ViewTab
           icon={ListDashes}
           active={view === "all" && !channelId && !categoryId}
@@ -246,9 +305,6 @@ export function QueueView({
           }
         >
           All
-          <span className="ml-1 text-xs opacity-60">
-            {optimisticEntries.length}
-          </span>
         </ViewTab>
         <ViewTab
           icon={TelevisionSimple}
@@ -271,7 +327,7 @@ export function QueueView({
       </div>
 
       {activeFilter && (
-        <div className="flex items-center gap-2 text-sm">
+        <div className="flex items-center gap-2 text-subhead">
           <button
             onClick={() =>
               setParam({
@@ -280,13 +336,13 @@ export function QueueView({
                 category: null,
               })
             }
-            className="flex items-center gap-1 rounded-full bg-surface px-3 py-1.5 text-muted transition hover:text-foreground"
+            className="flex items-center gap-1 text-blue transition hover:opacity-80"
           >
             <ArrowLeft size={14} weight="bold" /> Back
           </button>
-          <span className="text-muted">·</span>
-          <span className="font-medium">{activeFilter.label}</span>
-          <span className="text-muted">({filtered.length})</span>
+          <span className="text-muted-2">·</span>
+          <span className="text-headline">{activeFilter.label}</span>
+          <span className="text-muted">{filtered.length}</span>
         </div>
       )}
 
@@ -296,52 +352,38 @@ export function QueueView({
         <CategoryList entries={optimisticEntries} onPick={(id) => setParam({ view: null, category: id })} />
       ) : (
         <>
-          <div className="flex items-center justify-between gap-3">
-            <div className="inline-flex items-center gap-0.5 rounded-full bg-surface p-1 text-xs">
-              <SortPill
-                icon={ArrowDown}
-                active={sort === "newest"}
-                onClick={() => setSort("newest")}
-              >
-                Newest
-              </SortPill>
-              <SortPill
-                icon={ArrowUp}
-                active={sort === "oldest"}
-                onClick={() => setSort("oldest")}
-              >
-                Oldest
-              </SortPill>
-              <SortPill
-                icon={SortAscending}
-                active={sort === "channel"}
-                onClick={() => setSort("channel")}
-              >
-                Channel
-              </SortPill>
-              <SortPill
-                icon={Shuffle}
-                active={sort === "random"}
-                onClick={() => {
-                  setShuffleSeed(Date.now() % 2147483647);
-                  setSort("random");
-                }}
-              >
-                Random
-              </SortPill>
-            </div>
-            <button
-              onClick={fetchNew}
-              disabled={pending}
-              className="inline-flex items-center gap-1.5 rounded-full bg-foreground px-3.5 py-1.5 text-xs font-medium text-background transition hover:opacity-90 disabled:opacity-50"
+          <div className="flex items-center gap-1 overflow-x-auto scrollbar-hidden">
+            <SortPill
+              icon={ArrowDown}
+              active={sort === "newest"}
+              onClick={() => setSort("newest")}
             >
-              <ArrowClockwise
-                size={14}
-                weight="bold"
-                className={pending ? "animate-spin" : ""}
-              />
-              {pending ? "Checking" : "Get new"}
-            </button>
+              Newest
+            </SortPill>
+            <SortPill
+              icon={ArrowUp}
+              active={sort === "oldest"}
+              onClick={() => setSort("oldest")}
+            >
+              Oldest
+            </SortPill>
+            <SortPill
+              icon={SortAscending}
+              active={sort === "channel"}
+              onClick={() => setSort("channel")}
+            >
+              Channel
+            </SortPill>
+            <SortPill
+              icon={Shuffle}
+              active={sort === "random"}
+              onClick={() => {
+                setShuffleSeed(Date.now() % 2147483647);
+                setSort("random");
+              }}
+            >
+              Random
+            </SortPill>
           </div>
 
           {inProgress.length > 0 && (
@@ -421,13 +463,13 @@ function ViewTab({
   return (
     <button
       onClick={onClick}
-      className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 transition ${
+      className={`inline-flex flex-1 items-center justify-center gap-1.5 rounded-[10px] py-1.5 font-medium transition ${
         active
-          ? "bg-surface-raised text-foreground shadow-sm"
+          ? "bg-surface-raised text-foreground shadow-[0_1px_3px_rgba(0,0,0,0.5)]"
           : "text-muted hover:text-foreground"
       }`}
     >
-      <Icon size={16} weight={active ? "fill" : "regular"} />
+      <Icon size={14} weight={active ? "fill" : "regular"} />
       {children}
     </button>
   );
@@ -447,10 +489,10 @@ function SortPill({
   return (
     <button
       onClick={onClick}
-      className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 transition ${
+      className={`inline-flex shrink-0 items-center gap-1 rounded-full px-3 py-1.5 text-footnote transition ${
         active
-          ? "bg-surface-raised text-foreground shadow-sm"
-          : "text-muted hover:text-foreground"
+          ? "bg-foreground text-background"
+          : "bg-surface text-muted hover:text-foreground"
       }`}
     >
       <Icon size={12} weight="bold" />
@@ -579,37 +621,37 @@ function ChannelList({
 
   if (groups.length === 0)
     return (
-      <p className="mt-12 text-center text-sm text-muted">
+      <p className="mt-12 text-center text-subhead text-muted">
         No channels in your queue yet.
       </p>
     );
 
   return (
-    <ul className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3">
-      {groups.map((g) => (
-        <li key={g.id}>
+    <ul className="overflow-hidden rounded-2xl bg-surface md:grid md:grid-cols-2 md:gap-px md:bg-separator-opaque md:[&>li]:bg-surface xl:grid-cols-3">
+      {groups.map((g, i) => (
+        <li key={g.id} className={i === 0 ? "" : "hairline-top md:border-t-0"}>
           <button
             onClick={() => onPick(g.id)}
-            className="flex w-full items-center gap-3 rounded-xl bg-surface p-3 text-left transition hover:bg-surface-raised"
+            className="flex w-full items-center gap-3 px-3.5 py-2.5 text-left transition active:bg-surface-raised hover:bg-surface-raised"
           >
             {g.latestThumb && (
               // eslint-disable-next-line @next/next/no-img-element
               <img
                 src={g.latestThumb}
                 alt=""
-                className="h-14 w-24 shrink-0 rounded-lg object-cover"
+                className="h-12 w-20 shrink-0 rounded-lg object-cover"
               />
             )}
             <div className="min-w-0 flex-1">
-              <p className="truncate font-medium">{g.title}</p>
-              <p className="text-xs text-muted">
+              <p className="truncate text-body font-medium">{g.title}</p>
+              <p className="text-footnote text-muted">
                 {g.count} video{g.count === 1 ? "" : "s"}
               </p>
             </div>
             <CaretRight
-              size={16}
+              size={14}
               weight="bold"
-              className="shrink-0 text-muted"
+              className="shrink-0 text-muted-2"
               aria-hidden
             />
           </button>
@@ -639,29 +681,29 @@ function CategoryList({
 
   if (groups.length === 0)
     return (
-      <p className="mt-12 text-center text-sm text-muted">
+      <p className="mt-12 text-center text-subhead text-muted">
         No videos to categorize yet.
       </p>
     );
 
   return (
-    <ul className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-      {groups.map((g) => (
-        <li key={g.id}>
+    <ul className="overflow-hidden rounded-2xl bg-surface md:grid md:grid-cols-2 md:gap-px md:bg-separator-opaque md:[&>li]:bg-surface xl:grid-cols-3">
+      {groups.map((g, i) => (
+        <li key={g.id} className={i === 0 ? "" : "hairline-top md:border-t-0"}>
           <button
             onClick={() => onPick(g.id === "uncategorized" ? "" : g.id)}
-            className="flex w-full items-center justify-between rounded-xl bg-surface p-4 text-left transition hover:bg-surface-raised"
+            className="flex w-full items-center justify-between px-3.5 py-3 text-left transition active:bg-surface-raised hover:bg-surface-raised"
           >
             <div className="min-w-0 flex-1">
-              <p className="truncate font-medium">{g.name}</p>
-              <p className="text-xs text-muted">
+              <p className="truncate text-body font-medium">{g.name}</p>
+              <p className="text-footnote text-muted">
                 {g.count} video{g.count === 1 ? "" : "s"}
               </p>
             </div>
             <CaretRight
-              size={16}
+              size={14}
               weight="bold"
-              className="shrink-0 text-muted"
+              className="shrink-0 text-muted-2"
               aria-hidden
             />
           </button>
@@ -673,7 +715,7 @@ function CategoryList({
 
 function SectionLabel({ children }: { children: React.ReactNode }) {
   return (
-    <h2 className="text-xs font-medium uppercase tracking-wider text-muted">
+    <h2 className="px-0.5 text-footnote font-semibold uppercase tracking-wide text-muted">
       {children}
     </h2>
   );
@@ -757,7 +799,7 @@ function VideoCard({
       entry.channelTitle.trim().toLowerCase();
 
   return (
-    <div className="group relative flex h-full flex-col overflow-hidden rounded-xl bg-surface">
+    <div className="group relative flex h-full flex-col overflow-hidden rounded-2xl bg-surface">
       <Link
         href={`/watch/${entry.id}`}
         className="flex flex-1 flex-col focus-visible:outline-none"
@@ -772,7 +814,7 @@ function VideoCard({
             />
           )}
           {entry.durationSeconds != null && (
-            <span className="absolute bottom-2 right-2 rounded bg-black/80 px-1.5 py-0.5 text-xs tabular-nums">
+            <span className="absolute bottom-2 right-2 rounded-md bg-black/70 px-1.5 py-0.5 text-caption font-medium tabular-nums text-white/90 backdrop-blur">
               {formatDuration(entry.durationSeconds)}
             </span>
           )}
@@ -785,11 +827,11 @@ function VideoCard({
             </div>
           )}
         </div>
-        <div className="flex flex-1 flex-col gap-1.5 px-3.5 pt-3 pb-3">
-          <h3 className="line-clamp-2 text-sm font-medium leading-snug">
+        <div className="flex flex-1 flex-col gap-1 px-3.5 pt-2.5 pb-3">
+          <h3 className="text-subhead font-semibold leading-[1.3] line-clamp-2">
             {entry.title}
           </h3>
-          <div className="mt-auto flex flex-wrap items-center gap-x-1.5 text-xs text-muted">
+          <div className="mt-auto flex flex-wrap items-center gap-x-1.5 text-footnote text-muted">
             <span>{entry.channelTitle}</span>
             <span>·</span>
             <span>{formatRelative(new Date(entry.publishedAt))}</span>
@@ -844,7 +886,7 @@ function RowButton({
         e.stopPropagation();
         onClick();
       }}
-      className={`inline-flex items-center gap-1 rounded-lg px-2.5 py-1.5 text-muted transition hover:bg-surface-raised hover:text-foreground ${
+      className={`inline-flex items-center gap-1 rounded-lg px-2.5 py-1.5 text-footnote text-muted transition active:scale-95 active:bg-surface-raised hover:bg-surface-raised hover:text-foreground ${
         tone === "danger" ? "hover:text-danger" : ""
       }`}
     >
@@ -857,24 +899,23 @@ function RowButton({
 function EmptyState({ filtered }: { filtered: boolean }) {
   if (filtered)
     return (
-      <p className="mt-16 text-center text-sm text-muted">
+      <p className="mt-16 text-center text-subhead text-muted">
         No videos match this filter.
       </p>
     );
   return (
     <div className="mx-auto mt-16 max-w-sm space-y-4 text-center">
-      <p className="text-sm text-muted">
-        Nothing in your queue. Tap{" "}
-        <span className="text-foreground">Get new</span> to pull videos from
-        your saved searches, or{" "}
-        <Link href="/add" className="text-foreground underline">
+      <p className="text-subhead text-muted">
+        Nothing here yet. Tap{" "}
+        the refresh icon to pull videos from your saved lists, or{" "}
+        <Link href="/add" className="text-blue">
           paste a link
         </Link>
         .
       </p>
-      <p className="text-xs text-muted">
-        No searches yet?{" "}
-        <Link href="/searches/new" className="text-foreground underline">
+      <p className="text-footnote text-muted">
+        No lists yet?{" "}
+        <Link href="/searches/new" className="text-blue">
           Create one
         </Link>
       </p>

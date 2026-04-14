@@ -10,14 +10,19 @@ import {
 } from "@phosphor-icons/react";
 
 const TABS = [
-  { href: "/", label: "Queue", icon: ListDashes, match: (p: string) => p === "/" },
+  { href: "/", label: "Videos", icon: ListDashes, match: (p: string) => p === "/" },
   {
     href: "/searches",
-    label: "Searches",
+    label: "Saved lists",
     icon: MagnifyingGlass,
     match: (p: string) => p.startsWith("/searches"),
   },
-  { href: "/add", label: "Add", icon: PlusCircle, match: (p: string) => p === "/add" },
+  {
+    href: "/add",
+    label: "Add",
+    icon: PlusCircle,
+    match: (p: string) => p === "/add",
+  },
   {
     href: "/library",
     label: "Library",
@@ -28,13 +33,12 @@ const TABS = [
 
 export function BottomTabs() {
   const pathname = usePathname();
-  // Don't render on video player page (clean viewing)
   if (pathname.startsWith("/watch/")) return null;
   if (pathname.startsWith("/sign-in")) return null;
 
   return (
     <nav
-      className="fixed inset-x-0 bottom-0 z-30 border-t border-border/60 bg-background/95 backdrop-blur sm:hidden"
+      className="glass hairline-top fixed inset-x-0 bottom-0 z-40 sm:hidden"
       style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
     >
       <ul className="flex items-stretch justify-around">
@@ -45,12 +49,19 @@ export function BottomTabs() {
             <li key={tab.href} className="flex-1">
               <Link
                 href={tab.href}
-                className={`flex flex-col items-center gap-0.5 py-2 text-[10px] transition ${
+                className={`flex flex-col items-center gap-0.5 pt-2 pb-1.5 transition-[color] ${
                   active ? "text-accent" : "text-muted"
                 }`}
               >
-                <Icon size={22} weight={active ? "fill" : "regular"} />
-                <span className={active ? "font-medium" : ""}>{tab.label}</span>
+                <Icon size={24} weight={active ? "fill" : "regular"} />
+                <span
+                  className={`text-[10px] leading-none ${
+                    active ? "font-medium" : ""
+                  }`}
+                  style={{ letterSpacing: "0.01em" }}
+                >
+                  {tab.label}
+                </span>
               </Link>
             </li>
           );

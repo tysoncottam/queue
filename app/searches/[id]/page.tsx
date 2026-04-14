@@ -33,13 +33,13 @@ export default async function EditSearchPage({
       <div className="mx-auto max-w-xl">
         <Link
           href="/searches"
-          className="mb-4 inline-flex items-center gap-1 text-sm text-muted hover:text-foreground"
+          className="mb-4 inline-flex items-center gap-1 text-subhead text-blue"
         >
-          ← All searches
+          ← Saved lists
         </Link>
-        <div className="mb-6">
-          <h1 className="text-lg font-semibold">Edit search</h1>
-          <p className="mt-1 text-sm text-muted">
+        <div className="mb-5 space-y-2">
+          <h1 className="text-large-title">Edit list</h1>
+          <p className="text-subhead text-muted">
             Change the name, keywords, or date. The channel can&rsquo;t be
             changed — delete and create a new one if you want a different
             channel.

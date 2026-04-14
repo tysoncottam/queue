@@ -26,18 +26,16 @@ export function WatchShell({
     <div className="flex w-full flex-col gap-5">
       <VideoPlayer videoId={video.id} startSeconds={startSeconds} />
 
-      <div className="space-y-2">
-        <h1 className="text-xl font-semibold leading-snug lg:text-2xl">
-          {video.title}
-        </h1>
-        <p className="text-sm text-muted">
+      <div className="space-y-1.5">
+        <h1 className="text-title-2 lg:text-title-1">{video.title}</h1>
+        <p className="text-subhead text-muted">
           {video.channelTitle} · {formatRelative(new Date(video.publishedAt))}
         </p>
       </div>
 
       {video.description && (
-        <details className="rounded-xl bg-surface p-4 text-sm text-muted">
-          <summary className="cursor-pointer select-none text-xs font-medium uppercase tracking-wider">
+        <details className="rounded-2xl bg-surface p-4 text-subhead text-muted">
+          <summary className="cursor-pointer select-none text-footnote font-semibold uppercase tracking-wide text-muted">
             Description
           </summary>
           <p className="mt-3 whitespace-pre-wrap">{video.description}</p>

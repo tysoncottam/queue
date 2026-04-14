@@ -7,11 +7,11 @@ export default async function SignInPage() {
 
   return (
     <main className="flex min-h-dvh flex-col items-center justify-center px-6">
-      <div className="w-full max-w-sm space-y-10">
+      <div className="w-full max-w-sm space-y-12">
         <div className="space-y-3 text-center">
-          <h1 className="text-3xl font-semibold tracking-tight">Queue</h1>
-          <p className="text-sm text-muted">
-            Intentional video watching. You decide what shows up.
+          <h1 className="text-title-1">Videos</h1>
+          <p className="text-subhead text-muted">
+            Intentional watching. You decide what shows up.
           </p>
         </div>
 
@@ -23,14 +23,14 @@ export default async function SignInPage() {
         >
           <button
             type="submit"
-            className="flex w-full items-center justify-center gap-3 rounded-xl bg-foreground px-5 py-3 text-sm font-medium text-background transition-opacity hover:opacity-90 focus-visible:outline-none"
+            className="flex w-full items-center justify-center gap-3 rounded-xl bg-foreground px-5 py-3 text-body font-semibold text-background transition active:scale-[0.98] hover:opacity-90 focus-visible:outline-none"
           >
             <GoogleMark />
             Continue with Google
           </button>
         </form>
 
-        <p className="text-center text-xs text-muted">
+        <p className="text-center text-footnote text-muted">
           We use your Google account to read YouTube and (optionally) post
           comments as you.
         </p>
