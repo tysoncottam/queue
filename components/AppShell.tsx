@@ -1,6 +1,11 @@
 import Link from "next/link";
 import { signOut } from "@/auth";
 import Image from "next/image";
+import {
+  BookmarksSimple,
+  MagnifyingGlass,
+  PlusCircle,
+} from "@phosphor-icons/react/dist/ssr";
 
 export function AppShell({
   children,
@@ -19,21 +24,24 @@ export function AppShell({
           <nav className="ml-2 flex items-center gap-1 text-sm text-muted">
             <Link
               href="/searches"
-              className="rounded-lg px-2.5 py-1.5 hover:bg-surface hover:text-foreground"
+              className="inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 hover:bg-surface hover:text-foreground"
             >
-              Searches
+              <MagnifyingGlass size={16} />
+              <span className="hidden sm:inline">Searches</span>
             </Link>
             <Link
               href="/add"
-              className="rounded-lg px-2.5 py-1.5 hover:bg-surface hover:text-foreground"
+              className="inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 hover:bg-surface hover:text-foreground"
             >
-              Add
+              <PlusCircle size={16} />
+              <span className="hidden sm:inline">Add</span>
             </Link>
             <Link
               href="/library"
-              className="rounded-lg px-2.5 py-1.5 hover:bg-surface hover:text-foreground"
+              className="inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 hover:bg-surface hover:text-foreground"
             >
-              Library
+              <BookmarksSimple size={16} />
+              <span className="hidden sm:inline">Library</span>
             </Link>
           </nav>
           <div className="ml-auto flex items-center gap-2">

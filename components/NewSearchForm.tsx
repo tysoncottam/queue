@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
+import { SealCheck } from "@phosphor-icons/react";
 import { SearchPreview, type Candidate } from "./SearchPreview";
 
 type Channel = {
@@ -15,18 +16,12 @@ type Channel = {
 
 function VerifiedBadge() {
   return (
-    <svg
-      width="14"
-      height="14"
-      viewBox="0 0 24 24"
+    <SealCheck
+      size={14}
+      weight="fill"
       aria-label="Verified"
       className="shrink-0 text-muted"
-    >
-      <path
-        fill="currentColor"
-        d="M12 2 9.5 4.5 6 4l-.5 3.5L2 9.5 4.5 12 2 14.5 5.5 16 6 19.5 9.5 19 12 21.5l2.5-2.5 3.5.5.5-3.5 3.5-1.5-2.5-2.5 2.5-2.5-3.5-1.5-.5-3.5-3.5.5zM10.6 15.6 6.8 11.8l1.4-1.4 2.4 2.4 5-5 1.4 1.4z"
-      />
-    </svg>
+    />
   );
 }
 

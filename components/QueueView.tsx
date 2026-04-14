@@ -4,12 +4,28 @@ import {
   useEffect,
   useMemo,
   useOptimistic,
+  useRef,
   useState,
   useTransition,
 } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { motion, AnimatePresence, PanInfo } from "framer-motion";
+import {
+  ArrowClockwise,
+  ArrowDown,
+  ArrowLeft,
+  ArrowUp,
+  Bookmark,
+  CaretRight,
+  Check,
+  ListDashes,
+  Prohibit,
+  Shuffle,
+  SortAscending,
+  SquaresFour,
+  TelevisionSimple,
+} from "@phosphor-icons/react";
 import { formatDuration, formatRelative } from "@/lib/format";
 import { categoryName } from "@/lib/categories";
 
@@ -40,8 +56,26 @@ export type QueueEntry = {
   savedSearch: { id: string; name: string } | null;
 };
 
-type Sort = "newest" | "oldest" | "channel";
+type Sort = "newest" | "oldest" | "channel" | "random";
 type View = "all" | "channels" | "categories";
+
+/** Mulberry32 PRNG — deterministic shuffle given a seed */
+function seededShuffle<T>(xs: T[], seed: number): T[] {
+  let s = seed >>> 0;
+  const rand = () => {
+    s = (s + 0x6d2b79f5) >>> 0;
+    let t = s;
+    t = Math.imul(t ^ (t >>> 15), t | 1);
+    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+  const out = xs.slice();
+  for (let i = out.length - 1; i > 0; i--) {
+    const j = Math.floor(rand() * (i + 1));
+    [out[i], out[j]] = [out[j], out[i]];
+  }
+  return out;
+}
 
 export function QueueView({
   entries,
@@ -59,6 +93,7 @@ export function QueueView({
   const router = useRouter();
   const params = useSearchParams();
   const [sort, setSort] = useState<Sort>(initialSort);
+  const [shuffleSeed, setShuffleSeed] = useState(() => Date.now() % 2147483647);
   const [pending, startTransition] = useTransition();
   const [optimisticEntries, removeOptimistic] = useOptimistic(
     entries,
@@ -96,6 +131,7 @@ export function QueueView({
   }
 
   async function fetchNew() {
+    setShuffleSeed(Date.now() % 2147483647);
     const res = await fetch("/api/cron/poll", { method: "POST" });
     if (res.ok) startTransition(() => router.refresh());
   }
@@ -120,6 +156,7 @@ export function QueueView({
   }, [optimisticEntries, channelId, categoryId]);
 
   const sorted = useMemo(() => {
+    if (sort === "random") return seededShuffle(filtered, shuffleSeed);
     const xs = [...filtered];
     xs.sort((a, b) => {
       if (sort === "newest")
@@ -133,28 +170,34 @@ export function QueueView({
       return a.channelTitle.localeCompare(b.channelTitle);
     });
     return xs;
-  }, [filtered, sort]);
+  }, [filtered, sort, shuffleSeed]);
 
   const inProgress = sorted.filter((e) => e.status === "in_progress");
   const fresh = sorted.filter((e) => e.status === "new");
   const hasAnything = inProgress.length + fresh.length > 0;
 
+  const [pullDistance, pullRef] = usePullToRefresh(fetchNew, pending);
+
   return (
-    <div className="space-y-6">
-      {/* View tabs */}
-      <div className="flex items-center gap-1 text-sm">
+    <div className="space-y-6" ref={pullRef as React.RefObject<HTMLDivElement>}>
+      <PullIndicator distance={pullDistance} refreshing={pending} />
+
+      {/* View tabs — segmented control */}
+      <div className="inline-flex items-center gap-0.5 rounded-full bg-surface p-1 text-sm">
         <ViewTab
+          icon={ListDashes}
           active={view === "all" && !channelId && !categoryId}
           onClick={() =>
             setParam({ view: null, channel: null, category: null })
           }
         >
           All
-          <span className="ml-1.5 text-xs text-muted">
+          <span className="ml-1 text-xs opacity-60">
             {optimisticEntries.length}
           </span>
         </ViewTab>
         <ViewTab
+          icon={TelevisionSimple}
           active={view === "channels" || !!channelId}
           onClick={() =>
             setParam({ view: "channels", channel: null, category: null })
@@ -163,6 +206,7 @@ export function QueueView({
           Channels
         </ViewTab>
         <ViewTab
+          icon={SquaresFour}
           active={view === "categories" || !!categoryId}
           onClick={() =>
             setParam({ view: "categories", channel: null, category: null })
@@ -182,9 +226,9 @@ export function QueueView({
                 category: null,
               })
             }
-            className="flex items-center gap-1.5 rounded-full bg-surface px-3 py-1.5 text-muted hover:text-foreground"
+            className="flex items-center gap-1 rounded-full bg-surface px-3 py-1.5 text-muted transition hover:text-foreground"
           >
-            ← Back
+            <ArrowLeft size={14} weight="bold" /> Back
           </button>
           <span className="text-muted">·</span>
           <span className="font-medium">{activeFilter.label}</span>
@@ -198,28 +242,51 @@ export function QueueView({
         <CategoryList entries={optimisticEntries} onPick={(id) => setParam({ view: null, category: id })} />
       ) : (
         <>
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-1 text-xs">
-              {(["newest", "oldest", "channel"] as const).map((s) => (
-                <button
-                  key={s}
-                  onClick={() => setSort(s)}
-                  className={`rounded-full px-3 py-1.5 transition ${
-                    sort === s
-                      ? "bg-surface-raised text-foreground"
-                      : "text-muted hover:text-foreground"
-                  }`}
-                >
-                  {s === "channel" ? "channel" : s}
-                </button>
-              ))}
+          <div className="flex items-center justify-between gap-3">
+            <div className="inline-flex items-center gap-0.5 rounded-full bg-surface p-1 text-xs">
+              <SortPill
+                icon={ArrowDown}
+                active={sort === "newest"}
+                onClick={() => setSort("newest")}
+              >
+                Newest
+              </SortPill>
+              <SortPill
+                icon={ArrowUp}
+                active={sort === "oldest"}
+                onClick={() => setSort("oldest")}
+              >
+                Oldest
+              </SortPill>
+              <SortPill
+                icon={SortAscending}
+                active={sort === "channel"}
+                onClick={() => setSort("channel")}
+              >
+                Channel
+              </SortPill>
+              <SortPill
+                icon={Shuffle}
+                active={sort === "random"}
+                onClick={() => {
+                  setShuffleSeed(Date.now() % 2147483647);
+                  setSort("random");
+                }}
+              >
+                Random
+              </SortPill>
             </div>
             <button
               onClick={fetchNew}
               disabled={pending}
-              className="rounded-full border border-border bg-surface px-3 py-1.5 text-xs text-muted hover:border-muted hover:text-foreground disabled:opacity-50"
+              className="inline-flex items-center gap-1.5 rounded-full bg-foreground px-3.5 py-1.5 text-xs font-medium text-background transition hover:opacity-90 disabled:opacity-50"
             >
-              {pending ? "Checking…" : "Get new"}
+              <ArrowClockwise
+                size={14}
+                weight="bold"
+                className={pending ? "animate-spin" : ""}
+              />
+              {pending ? "Checking" : "Get new"}
             </button>
           </div>
 
@@ -256,26 +323,150 @@ export function QueueView({
   );
 }
 
+type PhosphorIcon = React.ComponentType<{
+  size?: number | string;
+  weight?: "thin" | "light" | "regular" | "bold" | "fill" | "duotone";
+  className?: string;
+}>;
+
 function ViewTab({
   children,
   active,
   onClick,
+  icon: Icon,
 }: {
   children: React.ReactNode;
   active: boolean;
   onClick: () => void;
+  icon: PhosphorIcon;
 }) {
   return (
     <button
       onClick={onClick}
-      className={`rounded-full px-3.5 py-1.5 transition ${
+      className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 transition ${
         active
-          ? "bg-surface-raised text-foreground"
+          ? "bg-surface-raised text-foreground shadow-sm"
           : "text-muted hover:text-foreground"
       }`}
     >
+      <Icon size={16} weight={active ? "fill" : "regular"} />
       {children}
     </button>
+  );
+}
+
+function SortPill({
+  children,
+  active,
+  onClick,
+  icon: Icon,
+}: {
+  children: React.ReactNode;
+  active: boolean;
+  onClick: () => void;
+  icon: PhosphorIcon;
+}) {
+  return (
+    <button
+      onClick={onClick}
+      className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 transition ${
+        active
+          ? "bg-surface-raised text-foreground shadow-sm"
+          : "text-muted hover:text-foreground"
+      }`}
+    >
+      <Icon size={12} weight="bold" />
+      {children}
+    </button>
+  );
+}
+
+const PULL_THRESHOLD = 72;
+const PULL_MAX = 120;
+
+function usePullToRefresh(
+  onRefresh: () => void | Promise<void>,
+  refreshing: boolean
+): [number, React.RefObject<HTMLDivElement | null>] {
+  const ref = useRef<HTMLDivElement | null>(null);
+  const [distance, setDistance] = useState(0);
+  const startY = useRef<number | null>(null);
+  const triggered = useRef(false);
+
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+
+    function onTouchStart(e: TouchEvent) {
+      if (window.scrollY > 0 || refreshing) {
+        startY.current = null;
+        return;
+      }
+      startY.current = e.touches[0].clientY;
+      triggered.current = false;
+    }
+
+    function onTouchMove(e: TouchEvent) {
+      if (startY.current == null) return;
+      const dy = e.touches[0].clientY - startY.current;
+      if (dy <= 0) {
+        setDistance(0);
+        return;
+      }
+      // Resist pulling the further we go
+      const resisted = Math.min(PULL_MAX, Math.pow(dy, 0.85));
+      setDistance(resisted);
+    }
+
+    function onTouchEnd() {
+      if (distance >= PULL_THRESHOLD && !triggered.current) {
+        triggered.current = true;
+        onRefresh();
+      }
+      setDistance(0);
+      startY.current = null;
+    }
+
+    el.addEventListener("touchstart", onTouchStart, { passive: true });
+    el.addEventListener("touchmove", onTouchMove, { passive: true });
+    el.addEventListener("touchend", onTouchEnd);
+    return () => {
+      el.removeEventListener("touchstart", onTouchStart);
+      el.removeEventListener("touchmove", onTouchMove);
+      el.removeEventListener("touchend", onTouchEnd);
+    };
+  }, [distance, onRefresh, refreshing]);
+
+  return [distance, ref];
+}
+
+function PullIndicator({
+  distance,
+  refreshing,
+}: {
+  distance: number;
+  refreshing: boolean;
+}) {
+  const visible = distance > 8 || refreshing;
+  const progress = Math.min(1, distance / PULL_THRESHOLD);
+  const rotation = refreshing ? 0 : progress * 360;
+  const height = refreshing ? 48 : Math.min(80, distance);
+
+  return (
+    <div
+      className="pointer-events-none flex items-center justify-center overflow-hidden transition-[height] duration-150 ease-out"
+      style={{ height: visible ? height : 0 }}
+      aria-hidden
+    >
+      <ArrowClockwise
+        size={22}
+        weight="bold"
+        className={`text-muted transition-colors ${
+          progress >= 1 ? "text-accent" : ""
+        } ${refreshing ? "animate-spin text-accent" : ""}`}
+        style={refreshing ? undefined : { transform: `rotate(${rotation}deg)` }}
+      />
+    </div>
   );
 }
 
@@ -337,9 +528,12 @@ function ChannelList({
                 {g.count} video{g.count === 1 ? "" : "s"}
               </p>
             </div>
-            <span className="text-muted" aria-hidden>
-              →
-            </span>
+            <CaretRight
+              size={16}
+              weight="bold"
+              className="shrink-0 text-muted"
+              aria-hidden
+            />
           </button>
         </li>
       ))}
@@ -386,9 +580,12 @@ function CategoryList({
                 {g.count} video{g.count === 1 ? "" : "s"}
               </p>
             </div>
-            <span className="text-muted" aria-hidden>
-              →
-            </span>
+            <CaretRight
+              size={16}
+              weight="bold"
+              className="shrink-0 text-muted"
+              aria-hidden
+            />
           </button>
         </li>
       ))}
@@ -528,9 +725,20 @@ function VideoCard({
         </div>
       </Link>
       <div className="flex items-center gap-1 border-t border-border/60 px-2 py-1.5 text-xs">
-        <RowButton onClick={() => onAction(entry.id, "watched")}>Watched</RowButton>
-        <RowButton onClick={() => onAction(entry.id, "saved_later")}>Later</RowButton>
         <RowButton
+          icon={Check}
+          onClick={() => onAction(entry.id, "watched")}
+        >
+          Watched
+        </RowButton>
+        <RowButton
+          icon={Bookmark}
+          onClick={() => onAction(entry.id, "saved_later")}
+        >
+          Later
+        </RowButton>
+        <RowButton
+          icon={Prohibit}
           onClick={() => onAction(entry.id, "not_interested")}
           tone="danger"
         >
@@ -544,10 +752,12 @@ function VideoCard({
 function RowButton({
   children,
   onClick,
+  icon: Icon,
   tone = "default",
 }: {
   children: React.ReactNode;
   onClick: () => void;
+  icon: PhosphorIcon;
   tone?: "default" | "danger";
 }) {
   return (
@@ -556,10 +766,11 @@ function RowButton({
         e.stopPropagation();
         onClick();
       }}
-      className={`rounded-lg px-2.5 py-1.5 text-muted transition hover:bg-surface-raised hover:text-foreground ${
+      className={`inline-flex items-center gap-1 rounded-lg px-2.5 py-1.5 text-muted transition hover:bg-surface-raised hover:text-foreground ${
         tone === "danger" ? "hover:text-danger" : ""
       }`}
     >
+      <Icon size={12} weight="bold" />
       {children}
     </button>
   );

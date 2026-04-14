@@ -3,6 +3,12 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useTransition } from "react";
+import {
+  PencilSimple,
+  Pause,
+  Play,
+  Trash,
+} from "@phosphor-icons/react";
 
 export function SearchActions({
   id,
@@ -33,22 +39,34 @@ export function SearchActions({
     <div className="flex shrink-0 gap-1 text-xs">
       <Link
         href={`/searches/${id}`}
-        className="rounded-lg px-2 py-1 text-muted hover:bg-surface-raised hover:text-foreground"
+        className="inline-flex items-center gap-1 rounded-lg px-2 py-1 text-muted hover:bg-surface-raised hover:text-foreground"
       >
+        <PencilSimple size={12} weight="bold" />
         Edit
       </Link>
       <button
         onClick={toggle}
         disabled={pending}
-        className="rounded-lg px-2 py-1 text-muted hover:bg-surface-raised hover:text-foreground disabled:opacity-50"
+        className="inline-flex items-center gap-1 rounded-lg px-2 py-1 text-muted hover:bg-surface-raised hover:text-foreground disabled:opacity-50"
       >
-        {active ? "Pause" : "Resume"}
+        {active ? (
+          <>
+            <Pause size={12} weight="bold" />
+            Pause
+          </>
+        ) : (
+          <>
+            <Play size={12} weight="bold" />
+            Resume
+          </>
+        )}
       </button>
       <button
         onClick={remove}
         disabled={pending}
-        className="rounded-lg px-2 py-1 text-muted hover:bg-surface-raised hover:text-danger disabled:opacity-50"
+        className="inline-flex items-center gap-1 rounded-lg px-2 py-1 text-muted hover:bg-surface-raised hover:text-danger disabled:opacity-50"
       >
+        <Trash size={12} weight="bold" />
         Delete
       </button>
     </div>

@@ -7,7 +7,7 @@ import { QueueView } from "@/components/QueueView";
 
 export const dynamic = "force-dynamic";
 
-const SORTS = ["newest", "oldest", "channel"] as const;
+const SORTS = ["newest", "oldest", "channel", "random"] as const;
 const VIEWS = ["all", "channels", "categories"] as const;
 
 function oneOf<T extends string>(
